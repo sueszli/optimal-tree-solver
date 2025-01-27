@@ -73,6 +73,6 @@ if __name__ == "__main__":
     threshold_assignment = findth(examples, tree, feature_assignment)
     
     if threshold_assignment:
-        print("Found valid threshold assignment:", threshold_assignment)
+        print("found valid threshold assignment:", threshold_assignment)
     else:
-        print("No valid threshold assignment found")
+        print("no valid threshold assignment found")
