@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional
 from dataclasses import dataclass
-import bisect
 
 
 @dataclass
@@ -20,42 +19,61 @@ class Node:
 
 
 def findth(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]) -> Optional[Dict[str, int]]:
-    # base case
-    if tree.is_leaf: # tree is already the root node
-        # check if all examples have same classification (uniform)
+    # base case: leaf node
+    if tree.is_leaf:
         if not examples:
             return {}
         is_positive = examples[0].is_positive
         is_uniform = all(e.is_positive == is_positive for e in examples)
         if not is_uniform:
             return None
-        return {} # empty assignment
+        return {}
 
-    # get feature from assignment
+    # get feature of node from assignment
     feature = feature_assignment[id(tree)]
 
-    """
-    simplified version of `binary_search`
-    """
-
-    # get all possible thresholds for this feature (domain value range)
-    thresholds = sorted(set(e.features[feature] for e in examples), reverse=True) # largest first
-
-    # find largest valid threshold
-    for t in thresholds:
-        # split examples based on threshold
-        left_examples = [e for e in examples if e.features[feature] <= t]
-        right_examples = [e for e in examples if e.features[feature] > t]
+    threshold = binary_search(examples, tree, feature_assignment, feature, tree.left)
+    
+    # try right subtree first
+    right_examples = [e for e in examples if e.features[feature] > threshold]
+    right_assignment = findth(right_examples, tree.right, feature_assignment)
+    if right_assignment is None:
+        return None
         
-        # recursively try to find threshold assignments for subtrees
-        left_assignment = findth(left_examples, tree.left, feature_assignment)
-        if left_assignment is not None:
-            right_assignment = findth(right_examples, tree.right, feature_assignment)
-            if right_assignment is not None:
-                # combine assignments
-                return {**{feature: t}, **left_assignment, **right_assignment}
+    # then try left subtree
+    left_examples = [e for e in examples if e.features[feature] <= threshold]
+    left_assignment = findth(left_examples, tree.left, feature_assignment)
+    if left_assignment is None:
+        return None
+    
+    # combine assignments
+    return {**{feature: threshold}, **left_assignment, **right_assignment}
 
-    return None
+
+def binary_search(examples: List[Example], tree: Node, feature_assignment: Dict[str, str], feature: str, left_child: Node) -> int:
+    domain_values = sorted(set(e.features[feature] for e in examples))
+    
+    left = 0
+    right = len(domain_values) - 1
+    best_threshold = domain_values[0] - 1  # default if no valid threshold found
+    
+    while left <= right:
+        mid = (left + right) // 2
+        threshold = domain_values[mid]
+        
+        # try left subtree with current threshold
+        left_examples = [e for e in examples if e.features[feature] <= threshold]
+        left_result = findth(left_examples, left_child, feature_assignment)
+        
+        if left_result is not None:
+            # valid threshold found, try larger ones
+            best_threshold = threshold
+            left = mid + 1
+        else:
+            # try smaller thresholds
+            right = mid - 1
+
+    return best_threshold
 
 
 if __name__ == "__main__":
@@ -77,5 +95,11 @@ if __name__ == "__main__":
     
     if threshold_assignment:
         print("found valid threshold assignment:", threshold_assignment)
+        for e in examples:
+            classification = "positive" if e.features['temp'] > threshold_assignment['temp'] else "negative"
+            success: bool = classification == 'positive' if e.is_positive else classification == 'negative'
+            if not success:
+                print("error in classification")
+                print(e.features)
     else:
         print("no valid threshold assignment found")
