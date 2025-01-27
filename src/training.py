@@ -108,7 +108,7 @@ def eval(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]
 
 
 if __name__ == "__main__":
-    # simple test
+    # test 1
     examples = [
         Example({"temp": 68, "rain": 0}, is_positive=True),
         Example({"temp": 60, "rain": 0}, is_positive=True),
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     feature_assignment = {id(tree): 'temp'}
     eval(examples, tree, feature_assignment)
 
-    # test based on figure 2
+    # test 2 (based on figure 2)
     examples = [
         Example({"temp": 37, "rain": 1, "time": 10, "day": 3}, is_positive=False),
         Example({"temp": 68, "rain": 0, "time": 60, "day": 2}, is_positive=True),
