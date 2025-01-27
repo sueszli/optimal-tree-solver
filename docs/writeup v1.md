@@ -4,9 +4,7 @@
 
 *motivation*
 
-- small decision trees:
-	- pros: fewer tests, easier to interpret, generalize better, faster eval
-	- cons: expensive to train
+- small decision trees: fewer tests, easier to interpret, generalize better, faster eval - but expensive to train
 - in general, deciding whether a tree with given size/depth can fit the data is np-hard and can be done using SAT solvers
 - we want to study the parameterized complexity to get runtime guarantees based on the "problem parameters" (size/depth for given data)
 - we want to study the scalability of algorithms to large inputs as long as the problem parameters remain small
