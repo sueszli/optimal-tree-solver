@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
+
 @dataclass
 class Example:
     features: Dict[str, int]  # feature name -> value
     is_positive: bool
+
 
 @dataclass
 class Node:
@@ -15,10 +17,10 @@ class Node:
     is_leaf: bool = False
     is_positive: Optional[bool] = None  # Only for leaf nodes
 
+
 def findth(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]) -> Optional[Dict[str, int]]:
     """
-    Implementation of Algorithm 1: FINDTH
-    Returns threshold assignment if possible, None otherwise
+    algorithm 1: find threshold assignment for decision tree
     """
     # Base case: leaf node
     if tree.is_leaf:
@@ -52,9 +54,8 @@ def findth(examples: List[Example], tree: Node, feature_assignment: Dict[str, st
     
     return None
 
-# Example usage
-def main():
-    # Create some example data
+
+if __name__ == "__main__":
     examples = [
         Example({'temp': 37, 'rain': 1}, is_positive=False),
         Example({'temp': 68, 'rain': 0}, is_positive=True),
@@ -62,22 +63,16 @@ def main():
         Example({'temp': 60, 'rain': 0}, is_positive=True),
     ]
 
-    # Create a simple decision tree structure
+    # simple decision tree structure
     tree = Node(
         left=Node(is_leaf=True, is_positive=False),
         right=Node(is_leaf=True, is_positive=True)
     )
 
-    # Create feature assignment
-    feature_assignment = {id(tree): 'temp'}  # Assign 'temp' to root node
-
-    # Find thresholds
+    feature_assignment = {id(tree): 'temp'}  # assign 'temp' to root node
     threshold_assignment = findth(examples, tree, feature_assignment)
     
     if threshold_assignment:
         print("Found valid threshold assignment:", threshold_assignment)
     else:
         print("No valid threshold assignment found")
-
-if __name__ == "__main__":
-    main()
