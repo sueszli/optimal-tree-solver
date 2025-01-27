@@ -83,7 +83,8 @@ def eval(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]
     def init_tree(tree: Node, feature_assignment: Dict[int, str] = {}, threshold_assignment: Dict[str, int] = {}):
         if tree.is_leaf:
             return
-        assert id(tree) in feature_assignment, f"Missing feature assignment for node {id(tree)}"
+        assert id(tree) in feature_assignment, f"missing feature assignment for node {id(tree)}"
+        assert feature_assignment[id(tree)] in threshold_assignment, f"missing threshold assignment for feature {feature_assignment[id(tree)]}"
         tree.feature = feature_assignment[id(tree)]
         tree.threshold = threshold_assignment[tree.feature]
         init_tree(tree.left, feature_assignment, threshold_assignment)
