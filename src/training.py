@@ -85,10 +85,9 @@ def binary_search(examples: List[Example], tree: Node, feature_assignment: Dict[
 # eval
 # 
 
+
 if __name__ == "__main__":
-    # 
     # dataset based on figure 2
-    # 
 
     # examples = [
     #     Example({"temp": 37, "rain": 1, "time": 10, "day": 3}, is_positive=False),
