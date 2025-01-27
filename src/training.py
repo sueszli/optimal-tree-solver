@@ -90,6 +90,7 @@ def eval(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]
         init_tree(tree.right, feature_assignment, threshold_assignment)
 
     init_tree(tree, feature_assignment, threshold_assignment)
+    print("threshold assignment:", threshold_assignment)
 
     for example in examples:
         actual = example.is_positive
