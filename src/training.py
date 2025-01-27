@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class Example:
     features: Dict[str, int]  # feature name -> value
-    is_positive: bool
+    is_positive: bool # label
 
 
 @dataclass
@@ -19,10 +19,7 @@ class Node:
 
 
 def findth(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]) -> Optional[Dict[str, int]]:
-    """
-    algorithm 1: find threshold assignment for decision tree
-    """
-    # Base case: leaf node
+    # base case: leaf node
     if tree.is_leaf:
         # Check if all examples have same classification
         if not examples:
