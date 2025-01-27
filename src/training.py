@@ -2,11 +2,6 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 
-# 
-# training
-# 
-
-
 @dataclass
 class Example:
     features: Dict[str, int]  # feature name -> value
@@ -81,55 +76,18 @@ def binary_search(examples: List[Example], tree: Node, feature_assignment: Dict[
     return best_threshold
 
 
-# 
-# eval
-# 
-
-
-if __name__ == "__main__":
-    # dataset based on figure 2
-
-    # examples = [
-    #     Example({"temp": 37, "rain": 1, "time": 10, "day": 3}, is_positive=False),
-    #     Example({"temp": 68, "rain": 0, "time": 60, "day": 2}, is_positive=True),
-    #     Example({"temp": 53, "rain": 1, "time": 60, "day": 4}, is_positive=False),
-    #     Example({"temp": 53, "rain": 0, "time": 15, "day": 2}, is_positive=False),
-    #     Example({"temp": 60, "rain": 0, "time": 60, "day": 5}, is_positive=True),
-    #     Example({"temp": 51, "rain": 0, "time": 40, "day": 3}, is_positive=True),
-    #     Example({"temp": 71, "rain": 0, "time": 35, "day": 5}, is_positive=True)
-    # ]
-
-    examples = [
-        Example({'temp': 68, 'rain': 0}, is_positive=True),
-        Example({'temp': 60, 'rain': 0}, is_positive=True),
-        Example({'temp': 53, 'rain': 1}, is_positive=False),
-        Example({'temp': 37, 'rain': 1}, is_positive=False),
-    ]
-
-    tree = Node(
-        left=Node(is_leaf=True, is_positive=False),
-        right=Node(is_leaf=True, is_positive=True)
-    )
-
-    feature_assignment = {id(tree): 'temp'}  # assign 'temp' to root node
-    
-
+def eval(examples: List[Example], tree: Node, feature_assignment: Dict[str, str]) -> None:
     threshold_assignment = findth(examples, tree, feature_assignment)
-    if not threshold_assignment:
-        print("no valid threshold assignment found")
-        exit()
+    assert threshold_assignment is not None, "no valid threshold assignment found"
     
-    # 
-    # eval
-    # 
-
     def init_tree(tree: Node, feature_assignment: Dict[int, str] = {}, threshold_assignment: Dict[str, int] = {}):
         if tree.is_leaf:
             return
+        assert id(tree) in feature_assignment, f"Missing feature assignment for node {id(tree)}"
         tree.feature = feature_assignment[id(tree)]
         tree.threshold = threshold_assignment[tree.feature]
-        init_tree(tree.left, threshold_assignment)
-        init_tree(tree.right, threshold_assignment)
+        init_tree(tree.left, feature_assignment, threshold_assignment)
+        init_tree(tree.right, feature_assignment, threshold_assignment)
 
     init_tree(tree, feature_assignment, threshold_assignment)
 
@@ -144,4 +102,45 @@ if __name__ == "__main__":
         pred = get_prediction(tree, example)
         assert actual == pred, f"actual: {actual}, pred: {pred} - {example.features}"
 
-    print("tree is valid")
+    print("all tests passed")
+
+
+if __name__ == "__main__":
+    # simple test
+    examples = [
+        Example({"temp": 68, "rain": 0}, is_positive=True),
+        Example({"temp": 60, "rain": 0}, is_positive=True),
+        Example({"temp": 53, "rain": 1}, is_positive=False),
+        Example({"temp": 37, "rain": 1}, is_positive=False),
+    ]
+    tree = Node(
+        left=Node(is_leaf=True, is_positive=False),
+        right=Node(is_leaf=True, is_positive=True)
+    )
+    feature_assignment = {id(tree): 'temp'}
+    eval(examples, tree, feature_assignment)
+
+    # test based on figure 2
+    examples = [
+        Example({"temp": 37, "rain": 1, "time": 10, "day": 3}, is_positive=False),
+        Example({"temp": 68, "rain": 0, "time": 60, "day": 2}, is_positive=True),
+        Example({"temp": 53, "rain": 1, "time": 60, "day": 4}, is_positive=False),
+        Example({"temp": 53, "rain": 0, "time": 15, "day": 2}, is_positive=False),
+        Example({"temp": 60, "rain": 0, "time": 60, "day": 5}, is_positive=True),
+        Example({"temp": 51, "rain": 0, "time": 40, "day": 3}, is_positive=True),
+        Example({"temp": 71, "rain": 0, "time": 35, "day": 5}, is_positive=True)
+    ]
+    time_node = Node(
+        left=Node(is_leaf=True, is_positive=False),
+        right=Node(is_leaf=True, is_positive=True)
+    )
+    rain_node = Node(
+        left=time_node,
+        right=Node(is_leaf=True, is_positive=False)
+    )
+    temp_node = Node(
+        left=Node(is_leaf=True, is_positive=False),
+        right=rain_node
+    )
+    feature_assignment = {id(temp_node): "temp", id(rain_node): "rain", id(time_node): "time"}
+    eval(examples, temp_node, feature_assignment)
