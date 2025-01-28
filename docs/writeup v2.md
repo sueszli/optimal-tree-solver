@@ -164,78 +164,26 @@ the hardness of decision tree learning comes primarily from feature selection, r
 *lemma 11*
 
 - 💡 additional features $R = \text{feat}(T) \textbackslash S$ of an optimal tree $T$ using support set $S$ are useful
-- they help distinguish between examples that can't be separated using just the support set $S$
+- additional features help seperate examples that look identical when only looking at the support features (= equivalence class)
 - what does "useful" mean?
-	- for ANY way we assign values to additional features ($\beta: R \mapsto D$)
-	- we can always find an assignment to support features ($\alpha: S \mapsto D$) where:
-    - $E[\alpha] \not = \emptyset$ → some examples match $\alpha$
-    - $E[\alpha \cup \beta] = \emptyset$ → but none match both $\alpha$ and $\beta$
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-- R is not useful for S if at least one assignment of R leaves all equivalence classes of S intact, where an equivalence class contains all examples that have the same value for all features in S
-
-
-- because they help split/differentiate examples that look identical under $S$ (equivalence classes)
-- $R$ creates impossible combinations that don't match any assignment in the dataset:
-	- for every $\beta$)there exists at least an assignment of $\alpha$, such that:
-		- i) $E[\alpha]$ is non-empty → meaning there are examples that match this assignment to S)
-		- ii) $E[\alpha \cup \beta]$ is empty → meaning when we add the assignment to R
-
-
+	- FOR ALL values assigned to additional features ($\beta: R \mapsto D$)
+	- there EXISTS a value assignment to support features ($\alpha: S \mapsto D$) where:
+	    - $E[\alpha]$ is non-empty - some examples match $\alpha$
+	    - $E[\alpha \cup \beta] \subseteq E[\alpha]$ is empty - but none simultaniously match both $\alpha$ and $\beta$
 - proof by contradiction:
-	- we want to show that we can build a smaller decision tree, by removing features in $R$
-	- assume $R$ is not empty (otherwise there is nothing to prove)
-	- assume there is some assignment $\beta$ to $R$ that leaves all equivalence classes under $S$ (defined by $\alpha$) intact, therefore $E[\alpha \cup \beta] = \emptyset$
-	- i) tree transformation
-		- step 1: for all nodes testing features in $R$, follow path according to $\beta$, remove unused subtrees → the result is a tree $T''$ where $R$-nodes have single-children
-		- step 2: find paths containing only $R$-nodes, contract the paths (remove the $R$ nodes by connecting parent to child directly) → the result is a tree $T'$ with only $S$-nodes having two children
-	- ii) contradition
-		- assume $T'$ is not a valid decision tree, meaning it must some leaf $l$ with mixed classifications
-		- $E[\alpha^+ \cup \beta]$ is non empty and contains at least a positive example in that leaf
-		- $E[\alpha^- \cup \beta]$ is non empty and contains at least a negative example in that leaf
-		- this means the original tree $T$ must have also misclassified these examples - but $T$ was valid, so this is impossible
-	- in conclusion, $R$ must be useful, because no smaller valid tree can exist
+	- assume: $R$ is not empty, otherwise proof is trivial
+	- If the lemma were false, there would EXIST a specific way to set the additional-support features ($\beta$) that FOR ALL support features ($\alpha$) results in $E[\alpha \cup \beta]$ being non-empty
+	- construction of $T'$:
+		- i.) for nodes in $T$ with features in $R$, recursively prune one child (left if $\beta(f) > \lambda$, else right). after removing those subtrees, $T''$ is formed where each node with $R$ features has only one child.
+		- ii.) contract maximal paths of $R$ nodes, making those paths into single edges.
+		- $T'$ ends up with non-leaf nodes only from $S$, each having two children.
+		- if  $T'$ is a valid decision tree, it contradicts our assumption that $T$ had minimum size.
+	- correctness of $T'$:
+		- assuming $T'$ were invalid, we'd find a leaf $l' \in T'$ containing both positive ($e^+$) and negative ($e^-$) examples. these examples would come from different assignments $\alpha^+$ and $\alpha^-$ over the feature set $S$.
+		- now, in the original tree $T$, the path to a leaf is determined by both $S$ and $R$ features. but because we're assuming the lemma is false, this means there's an assignment $\beta$ for $R$ that doesn't split any equivalence classes of $S$.
+		- because of this $\beta$, the examples that reached the mixed leaf $l'$ in $T'$ would also end up in the same leaf $l$ in $T$. why? because $\beta$ doesn't cause any additional splits.
+		- since assuming $T'$ is invalid leads to a contradiction (it would make $T$ invalid too), we must conclude that $T'$ is actually valid.
+	- assuming $R$ is not useful leads to a valid decision tree $T'$ that is smaller $|T'| < |T|$, which contradicts the minimality of $T$. this forces the conclusion that $R$ must be useful, ensuring that no smaller valid decision tree exists.
 
 *lemma 12*
 
