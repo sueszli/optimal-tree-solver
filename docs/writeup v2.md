@@ -39,8 +39,9 @@
 	- correctly classifies every example
 - pseudo tree = balanced binary tree, no features and thresholds, can't correctly classify examples
 	- if a valid threshold $\gamma$ can be found for a pseudo tree with assigned features $(T, \alpha)$, then it can be extended to a valid decision tree
-- $\alpha: \text{feat}(E) \mapsto v(T)$ - feature assignment function = defines test features $\text{feat}(T)$ in tree
-- $\gamma: D_E(\alpha(v)) \mapsto v(T)$ - threshold assignment function = defines test thresholds $\lambda$ in tree
+- $\alpha: v(T) \mapsto \text{feat}(E)$ - feature assignment function = defines test features $\text{feat}(T)$ in tree
+	- this overloads alpha which previously mapped values to features, not features to decision nodes
+- $\gamma: v(T) \mapsto D_E(\alpha(v))$ - threshold assignment function = defines test thresholds $\lambda$ in tree
 
 assumption for complexity analysis: $|E| = |E| \cdot (|feat(E)| + 1) \cdot \log D_{max}$
 
@@ -136,82 +137,92 @@ the hardness of decision tree learning comes primarily from feature selection, r
 	- number of recursive calls = $O(\log \|E\|^d)$ because it calls it self at most $\log \|E\| + 2$ times due to binary search
 	- runtime of each call = $O(\|E\| \log \| E \|)$
 
-## stage 1: feature selection
-
-
-
-
-
-
-
-
-
-
 *theorem 7*
 
-- 💡✨ DTS and DTD are XP-tractable parameterized by $sol$
-- theorem 4 says we can efficiently $O(d^{d^2 / 2} \|E\|^{1+o(1)} \log \|E\|)$ find an optimal decision tree if we know which features to use
-- the maximum number of features the decision tree can use is $s$, therefore $O(|\text{feat}(E)|^s)$ feature cobinations are possible at most
-- when $s$ is constant:
-	- i) enumerate all $O(|feat(E)|^s)$ possible feature subsets
-	- ii) for each subset, apply theorem 4's algorithm
-	- total runtime = $O(|\text{feat}(E)|^s \cdot 2^{(s^2/2)} \cdot |E|^(1+o(1)) \log|E|)$
-	- $|\text{feat}(E)|^s$ becomes polynomial in input size, $2^{(s^2/2)}$ becomes a constant - therefore total runtime becomes polynomial in input size
-- this makes it XP-tractable because runtime can be expressed as $|\text{input}|^{f(s)}$ where $f(s)$ is some function of $s$
-- but not FPT tractable because the degree of the polynomial depends on parameter $s$
+- 💡 without any feature selection, just by enumerating the $O(|\text{feat}(E)|^s)$ possible support sets, we can solve the entire problem in $O(|\text{feat}(E)|^s \cdot 2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
+- this runtime is XP-tractable parametrized by $s$, but not FPT tractable because the degree of the polynomial depends on parameter $s$
 
-*theorem 8 (main result)*
+## stage 1: feature selection
 
-- 💡✨ DTS and DTD are FTP-tractable parameterized by $\{sol, \delta_\max, D_\max\}$
-- as seen in theorem 2: just using the $s, d$ and $D_{\max}$ as problem parameters alone does not yield fixed-parameter tractability FTP, even if all the features are booleans $D_{\max}\text{=}2$
-- however, you add one more restriction the problem becomes fixed-parameter tractable:
-	- limiting the size of the sets in the hitting set instance = limiting maximum difference $\delta_{\max}$
-	- this approach of adding carefully chosen restrictions to make hard problems manageable is called "deconstruction of intractability"
-- adding the maximum difference $\delta_{\max}$ as additional parameter to solution size $s$ and maximum domain size $D_{\max}$ renders both problems, DTS and DTD, fixed-parameter tractable
-- proof is in algorithm below
+*theorem 8*
+
+- 💡 $\{sol, \delta_\max, D_\max\}$ yields FTP tractability
+- proof: `minDT` algorithm
 
 *corollary 9*
 
-- 💡✨ given examples $E$ (with maximum difference $\delta_\max$), support size limit $k$, there is an algorithm that can enumerate all minimal support sets in time $O(\delta_\max(E)^k \cdot |E|)$
-- = runtime to find minimal support sets
-- $k$ = maximum size of support sets we're looking for
-- $\delta_\max(E)$ = the maximum number of features any two examples with different classifications can disagree on
-- for each position in the support set (up to $k$ positions)
-	- we have at most $\delta_\max(E)$ choices of features
-	- leading to at most $\delta_\max(E)^k$ possible combinations to check
-    - each check requires $O(|E|)$ time to verify if it's a valid support set
+- 💡 we can enumerate all minimal support sets $S$ that all smaller than $k$ in $O(\delta_\max(E)^k \cdot |E|)$
+- proof: this is the runtime of the hitting set $O(\Delta^k \cdot |F|)$
+- however, finding minimal support sets isn't sufficient as shown in lemma 10
 
 *lemma 10*
 
-- 💡✨ there are examples $E_D$ or $E_S$ such that when used on a decision tree, it's test features are not a minimal support set for any decision tree of minimum depth / size
-- given observation 1 and collarary 9:
-	- any decision tree's features must form a support set (seperate positive from negative examples)
-	- we can find the minimal support set in just $O(\delta_\max(E)^k \cdot |E|)$
-	- one might think optimal (minimum size/depth) DTs would only use features from minimal support sets, since they use the fewest features needed for classification → this way we could (1) enumerate all support sets, (2) check each one for optimality based on the generated decision tree, (3) pick the best result
-	- however counter examples show that this is not the case
-- this shows **optimal decision trees may need additional features beyond minimal support sets** → we can't solve feature selection problem for decision trees by solving the minimal suport set problem
-- sometimes adding "unnecessary" features (from a support set perspective) can lead to better trees, fundamentally changing how the problem needs to be approached
-- proof by 1 counter example
+- 💡 all test features $\text{feat}(T)$ are a support set $S$, but not all support sets are valid test features for optimal trees
+- optimal decision trees need additional features beyond minimal support sets
+- proof: counter example in figure 3
 
 *lemma 11*
 
-- 💡✨ given an optimal (min size/depth) tree $T$, that contains a support set $S$ - a subset of all the features used by its test nodes $\text{feat}(T)$ - the features that are not in that subset $R = \text{feat}(T) \textbackslash S$ are useful
-- intuition:
-	- we need to find features used in optimal (min size/depth) decision trees
-	- we can't just use minimal support sets (proven by lemma 10)
-	- every optimal decision tree $T$ must contain some minimal support set $S$
-	- **additional features** $R = \text{feat}(T) \textbackslash S$ **must serve some purpose**
-	- these features are "useful" if they help split/differentiate examples that look identical under $S$ (equivalence classes)
-- definition of usefulness:
-	- there must be some equivalence class under $S$ (defined by $\alpha$) that becomes empty when you add $R$'s feature tests
-	- i) $E[\alpha]$ is non-empty → meaning this is a valid equivalence class
-	- ii) $E[\alpha \cup \beta]$ is empty → meaning $R$ splits this class
-	- where:
-		- alpha and beta represent value combinations in examples, they are parameters that decide which example to choose
-		- $E[\alpha]$ = all examples matching feature values of $S$
-		- $E[\beta]$ = all examples matching feature values of $R$
-		- $E[\alpha \cup \beta]$ = all examples matching both feature values from both sets
-		- equivalence classes = all examples that have the same value for all features in $S$
+- 💡 additional features $R = \text{feat}(T) \textbackslash S$ of an optimal tree $T$ using support set $S$ are useful
+- they help distinguish between examples that can't be separated using just the support set $S$
+- what does "useful" mean?
+	- for ANY way we assign values to additional features ($\beta: R \mapsto D$)
+	- we can always find an assignment to support features ($\alpha: S \mapsto D$) where:
+    - $E[\alpha] \not = \emptyset$ → some examples match $\alpha$
+    - $E[\alpha \cup \beta] = \emptyset$ → but none match both $\alpha$ and $\beta$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- R is not useful for S if at least one assignment of R leaves all equivalence classes of S intact, where an equivalence class contains all examples that have the same value for all features in S
+
+
+- because they help split/differentiate examples that look identical under $S$ (equivalence classes)
+- $R$ creates impossible combinations that don't match any assignment in the dataset:
+	- for every $\beta$)there exists at least an assignment of $\alpha$, such that:
+		- i) $E[\alpha]$ is non-empty → meaning there are examples that match this assignment to S)
+		- ii) $E[\alpha \cup \beta]$ is empty → meaning when we add the assignment to R
+
+
 - proof by contradiction:
 	- we want to show that we can build a smaller decision tree, by removing features in $R$
 	- assume $R$ is not empty (otherwise there is nothing to prove)
