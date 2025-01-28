@@ -109,15 +109,33 @@ hitting set problem:
 - 💡 num of inner nodes does not yield FTP tractability – because it's paraNP-hard tractable
 	- proof: due to $\text{min}_{\#}(E(\mathcal I)) = 1$ we have 0 branching nodes, just two leafs
 
-
-
-
-
-
-
 # algorithm
 
 the hardness of decision tree learning comes primarily from feature selection, rather than training
+
+## stage 2: training
+
+*theorem 4*
+
+- 💡 we can compute an optimal decision tree that only uses the given support set $S$ features in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
+- proof: `findTH` algorithm
+	- the runtime of lemma 6 dominates that of lemma 5 when they're multiplied
+	- we enumerate all $(T, \alpha)$ pairs, then search for a valid $\gamma$ recursively, starting from the root node
+	- monotonicity property of thresholds = it suffices to find the maximum threshold $t \in D_E(f)$ for each node, which can be done with binary search
+
+*lemma 5*
+
+- 💡 we can enumerate all (pseudo tree $T$, feature assignment $\alpha$) pairs where the assigned features are from the support set $S$ in $O(s^s)$
+- the number of trees we have to consider is defined by $k$ which is bounded by the solution size $k = |S| \leq s$
+- this means we can just enumerate/brute force all tree structures and feature assignments to nodes, but not all possible thresholds - that will need a heuristic
+
+*lemma 6*
+
+- 💡 we can find valid threshold assignments $\gamma$ for (pseudo tree $T$, feature assignment $\alpha$) pairs in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
+- = number of recursive $\text{findTH}$ calls $\cdot$ runtime of each call
+	- number of recursive calls = $O(\log \|E\|^d)$ because it calls it self at most $\log \|E\| + 2$ times due to binary search
+	- runtime of each call = $O(\|E\| \log \| E \|)$
+
 ## stage 1: feature selection
 
 
@@ -128,68 +146,6 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 
 
-
-## stage 2: training
-
-*theorem 4*
-
-- 💡 one can compute an optimal decision tree that exclusively tests features from a given support set $S$ in time $2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|$
-- proof: final algorithm
-
-*lemma 5*
-
-- the number of trees we have to consider is defined by $k$ which is bounded by the solution size $k = |S| \leq s$
-- this means we can enumerate/brute force all tree structures and feature assignments to nodes, but not all possible thresholds
-
-
----
-
-
-
-
-
-*lemma 5, 6*
-
-- 💡✨ given examples $E$, a support set $S$, an integer $s \geq k = |S|$, then there exists an algorithm that enumerates all pseudo tree and test feature assignment $(T, \alpha)$ pairs in time $O(s^s)$
-- 💡✨ given examples $E$, a pseudo tree $T$, a feature assignment $\alpha$, then there exists an algorithm that decides whether $(T, \alpha)$ can have a decision criteria to become a valid decision tree in time $O(d^{d^2 / 2} \|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
-- we can enumerate all pseudo decision trees' feature assignments efficiently, but not the number of all thresholds, since the number of possible thresholds is potentially as large as the input size (that will need a heuristic)
-- definition:
-	- pseudo dt = pseudo decision tree, each non-leaf node must have exactly two children (left and right). only defines structure of tree, but doesn't have features or decision criteria (but they can be added and it will become a valid decision tree)
-	- $\alpha: V(T) \mapsto \text{feat}(E)$ = feature assignment function, assigns features to each test node
-	- $\gamma: V(T) \mapsto D$ = decision criteria assignment function, assigns numerical threshhold values to each test node
-- proof:
-	- = how to recursively determine if a pseudo tree with test feature assignment $(T, \alpha)$ can be extended into a valid decision tree using threshhold values
-	- starting at the root, each test-node has two children
-	- the root can only be a valid tree, if the left/right child-trees can also be recursively extended to a valid tree, using all examples where the values of the root's test feature $f$ are $\leq t$ or $> t$
-	- the problem can therefore be reduced to recursively finding threshold $t$ among all values in the range $D_E(f)$ for each node
-	- however, because the range is very large, we have to make use of the "monotonicity property of thresholds", which allows us to use binary search instead of searching exhaustively → if a valid threshold $t$ exists on the left subtree, it remains valid for any $t' \geq t$
-- algorithm:
-	- i. find the largest threshold $t$ for the feature at the root at which the left subtree is valid
-	- ii. verify whether the right subtree is valid with that threshold
-
-*algorithm 1, 2*
-
-- this is an efficient way to find threshhold values for pseudo trees with assigned test-features
-- $\text{findTH}$ algorithm: (finds threshhold)
-	- input: examples $E$, pseudo tree $T$, test-feature assignments $\alpha$
-	- output: test-threshhold assignments $\lambda$ (such that tree is valid) or `nil`
-- $\text{binarySearch}$ subroutine:
-	- finds the largest value for left sub tree
-	- input: examples $E$, pseudo tree $T$, test-feature assignments $\alpha$, feature of root $f$, left child of root $c_l$
-	- output: largest threshold in range $D_E(f)$ such that left subtree is a valid decision tree with all examples where $f \leq t$. otherwise the smallest value in the range, subtracted by one, is returned.
-- runtime proof for theorem 4:
-	- i. enumerate all pseudo trees and test-feature assignemnts ($T, \alpha$)
-		- see lemma 5
-		- runtime: $O(s^s)$
-	- ii. for each ($T, \alpha$) pair we filter by those that have a valid threshold $t$, in order for them to become a decision tree.
-		- see lemma 6
-		- runtime: $O(d^{d^2 / 2} \|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
-		- = number of recursive $\text{findTH}$ calls $\cdot$ runtime of each call
-			- number of recursive calls = $O(\log \|E\|^d)$ because it calls it self at most $\log \|E\| + 2$ times for each decision tree of smaller depth
-			- runtime of each call = $O(\|E\| \log \| E \|)$
-	- iii. we return the smallest of all valid decision trees or `nil` if it doesn't exist
-		- $O(s^s) + O(d^{d^2 / 2} \|E\|^{1+o(1)} \log \|E\|)$
-		- the second term dominates and is the final runtime
 
 *theorem 7*
 
@@ -297,13 +253,4 @@ the hardness of decision tree learning comes primarily from feature selection, r
 - first factor:
 	- $|E(S)| \leq D^{|S|}_\max$ because for every feature in $S$ we can have at most $D_\max$ values from that domain
 
-*algorithm 3, 4*
 
-- $\text{minDT}$ algorithm:
-	- finds minimum size decision tree
-	- input: dataset $E$, integer $s$
-	- output: tree or `nil`
-- $\text{minDTS}$ algorithm (subroutine):
-	- finds minimum size decision tree, using at least the features in a given support set $S$
-	- input: dataset $E$, support set $S$ for $E$ with $|S| \leq s$
-	- output: tree using $S$ for test nodes or `nil`
