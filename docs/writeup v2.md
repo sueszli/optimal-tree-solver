@@ -185,14 +185,11 @@ the hardness of decision tree learning comes primarily from feature selection, r
 		- since assuming $T'$ is invalid leads to a contradiction (it would make $T$ invalid too), we must conclude that $T'$ is actually valid.
 	- assuming $R$ is not useful leads to a valid decision tree $T'$ that is smaller $|T'| < |T|$, which contradicts the minimality of $T$. this forces the conclusion that $R$ must be useful, ensuring that no smaller valid decision tree exists.
 
-*lemma 12*
 
-- 💡✨ let $E(S)$ contain at least one arbitrary example from each non-empty $E[\alpha]$. then every useful set $R$ must contain at least one feature from the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$
-- branching set $R_0$ = every useful set $R$ for support set $S$ must contain at least one feature from $R_0$
-- idea:
-	- for every $R$ there must be some equivalence class (that can't be distinguished) under $S$ that becomes empty (distinguishable) when you add $R$'s features to test nodes
-	- for every example $e \in E[\alpha]$ the set $R$ must contain at least one feature $f$ for which $e$ disagrees with $\beta$, such that the example set $E[\alpha \cup \beta]$ becomes empty
-	- meaning $R \subseteq \delta(e, \beta)$
+
+
+
+
 
 
 
@@ -203,6 +200,15 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 
 ---
+
+*lemma 12*
+
+- 💡✨ let $E(S)$ contain at least one arbitrary example from each non-empty $E[\alpha]$. then every useful set $R$ must contain at least one feature from the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$
+- branching set $R_0$ = every useful set $R$ for support set $S$ must contain at least one feature from $R_0$
+- idea:
+	- for every $R$ there must be some equivalence class (that can't be distinguished) under $S$ that becomes empty (distinguishable) when you add $R$'s features to test nodes
+	- for every example $e \in E[\alpha]$ the set $R$ must contain at least one feature $f$ for which $e$ disagrees with $\beta$, such that the example set $E[\alpha \cup \beta]$ becomes empty
+	- meaning $R \subseteq \delta(e, \beta)$
 
 *lemma 13*
 
