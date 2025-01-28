@@ -10,6 +10,7 @@
 
 *preliminaries*
 
+- $sol$ - solution size = can be $s, d$
 - $s$ - size = count of non-leaf nodes
 - $d$ - depth = longest root-to-leaf path
 - $F,~ \text{feat}(E)$ - features = can have a domain value, finite
@@ -32,20 +33,21 @@
 - $S$ - support set = set of features that can distinguish between all positive and negative examples
 	- any two examples with different labels must disagree in at least one feature of $S$
 	- $\forall e_1 \in E^+, e_2 \in E^-: \exists f \in S: \delta(e_1, e_2) \not = \emptyset$
-
+- $T$ - decision tree = unbalanced binary tree $T = (V, A)$ that partitions decision space
+	- has verteces/tests, arcs/edges
+	- each inner node $v$ has a feature $\text{feat}(v)$ and threshold value $\lambda(v)$ assigned to it
+	- correctly classifies every example
+- pseudo tree = balanced binary tree, no features and thresholds, can't correctly classify examples
+	- if a valid threshold $\gamma$ can be found for a pseudo tree with assigned features $(T, \alpha)$, then it can be extended to a valid decision tree
+- $\alpha: \text{feat}(E) \mapsto v(T)$ - feature assignment function = defines test features $\text{feat}(T)$ in tree
+- $\gamma: D_E(\alpha(v)) \mapsto v(T)$ - threshold assignment function = defines test thresholds $\lambda$ in tree
 
 assumption for complexity analysis: $|E| = |E| \cdot (|feat(E)| + 1) \cdot \log D_{max}$
 
-- $T$ - decision tree = consists of vertices and arcs/edges $T = (V, A)$, each node has a feature and threshold assigned to it (left child gets $\leq$ values)
-
-
-
 *observation 1*
 
-- 💡 trees use some support set $S$ for their test nodes
-
-
-
+- 💡 trees use some support set $S$ for their test nodes $\text{feat}(T)$
+- proof: if examples with different labels wouldn't disagree on a value, they would end in the same leaf and the tree would be invalid
 
 # hardness results
 
@@ -53,10 +55,13 @@ theorem 2 reduces the hitting set problem HS to DTS/DTD and shows that $\{sol,  
 
 however, when the hitting set has a bounded size, the problem becomes FTP tractable. this is equivalent to $\delta_\max$ in our original problem and is naturally small for most datasets (see table 1). this approach to finding parameters is called "deconstruction of intractability".
 
-theorem 8 confirms this finding by laying out the entire algorithm.
+theorem 8 confirms this finding by showing the final algorithm.
+
+for the sake of simplicity most proofs only mention the DTS problem.
 
 *complexity landscape*
 
+- we can assume the problem parameters to be small
 - FTP tractable = $\{sol, \delta_\max, D_\max\}$
 	- runtime is exponential in a function of the problem params, polynomial in the input size
 	- runtime is bounded by $f(k) \cdot n^{O(1)}$, where $f$ is any computable function of parameter $k$ and $n$ is the input size
@@ -67,13 +72,42 @@ theorem 8 confirms this finding by laying out the entire algorithm.
 	- runtime is bounded by $n^{f(k)}$, where $f$ is any computable function of parameter $k$ and $n$ is the input size
 - w[2] tractable = $\{sol\},~ \{sol,  D_\max\}$
 	- problem can be solved by a circuit with $t$ layers of gates with many inputs
+	- strong evidence that a problem is not FTP
 - paraNP hard = $\emptyset,~ \{\delta_\max\},~ \{D_\max\},~ \{\delta_\max, D_\max\}$
 	- problem remains NP-hard even when the parameters are fixed to a constant
 
 *threorem 2*
 
-- 💡 $\{sol,  D_\max\}$ alone don't yield FTP tractability, even if all the features are booleans.
-- this is proven by reducing the hitting set HS problem to ours
+- 💡 $\{sol,  D_\max\}$ does not yield FTP tractability, even if all the features are booleans – because it's W[2] tractable
+- proof: you can reduce the hitting set problem HS to the optimal decision tree problem DTS/DTD
+- any valid decision tree must distinguish the single positive example from all negative examples with a single split. this forces it to identify all features that "hit" all the negative examples
+
+hitting set problem:
+
+- in some universe $U$ of elements, given a collection of sets $\mathcal F$ – find a subset $H$ containing at most $k$ elements that intersect with every single set in the collection $\forall F \in \mathcal F: F \cap H \not= \emptyset$
+	- $U$ = universe of all possible elements
+	- $\mathcal F \subseteq U$ = collection of sets
+	- $H \subseteq U$ = hitting set of size of max size $k$
+	- $\Delta$ - maximum arity = size of the largest set $F \in \mathcal F$
+- reduction: hitting set → decision tree:
+	- reduction in polynomial time, preserves parameter $k$ (hitting set size becomes solution size)
+	- elements in the universe - are represented as features
+	- collection of sets - are represented as examples, using boolean flags to encode whether an element from the universe belongs to that set
+	- steps to generate $E(\mathcal I)$ from hitting set instance $\mathcal I$:
+		- i. create the empty set $\emptyset$ – set all feature flags to `false`, set label to `positive`
+		- ii. create the collection of sets – set feature flag based on belonging, set label to `negative`
+
+*theorem 3*
+
+- 💡 $\{\delta_\max(E)\}$ does not yield FTP tractability, even if all the features are booleans – because it's paraNP-hard tractable
+	- proof: $\delta_\max(E(\mathcal I)) = \Delta_\max(\mathcal I)$
+	- the highest number of features two examples with a different classification can disagree on, is equivalent to the size of the largest set in the collection
+	- the only positive example has all zeros, each negative example has ones exactly in positions corresponding to elements of its set $F$. therefore, the number of disagreements between the only positive and any negative examples equals the size of set $F$
+- 💡 $\{\text{min}_{\#}(E)\}$ does not yield FTP tractability – because it's paraNP-hard tractable
+	- where: $\text{min}_{\#}(E) = \min\{|E^+|, |E^-|\}$
+	- proof: in our reduction $\text{min}_{\#}(E(\mathcal I)) = 1$ because we have a single positive example
+- 💡 num of inner nodes does not yield FTP tractability – because it's paraNP-hard tractable
+	- proof: due to $\text{min}_{\#}(E(\mathcal I)) = 1$ we have 0 branching nodes, just two leafs
 
 
 
@@ -81,95 +115,38 @@ theorem 8 confirms this finding by laying out the entire algorithm.
 
 
 
+# algorithm
+
+the hardness of decision tree learning comes primarily from feature selection, rather than training
+## stage 1: feature selection
+
+
+
+
+
+
+
+
+
+
+## stage 2: training
+
+*theorem 4*
+
+- 💡 one can compute an optimal decision tree that exclusively tests features from a given support set $S$ in time $2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|$
+- proof: final algorithm
+
+*lemma 5*
+
+- the number of trees we have to consider is defined by $k$ which is bounded by the solution size $k = |S| \leq s$
+- this means we can enumerate/brute force all tree structures and feature assignments to nodes, but not all possible thresholds
 
 
 ---
 
 
 
-# hardness results
 
-this chapter just serve to explain why specifically the 3 parameters were chosen
-
-- FTP tractable = $\{sol, \delta_\max, D_\max\}$ → author's assume $D_\max$ might be redundant
-- XP tractable = $\{sol\},~ \{sol, \delta_\max\},~ \{sol,  D_\max\}$
-- w[2] tractable = $\{sol\},~ \{sol,  D_\max\}$
-- paraNP hard = $\emptyset,~ \{\delta_\max\},~ \{D_\max\},~ \{\delta_\max, D_\max\}$
-- we can assume problem parameters to be small: $sol, D_{\max}, \delta_{\max}$ (see table 1)
-
-*hitting set problem*
-
-- input: 
-	- $\mathcal F \subseteq U$ = collection of sets
-		- $\Delta$ = maximum arity, size of the largest set $F \in \mathcal F$
-	- $U$ = universe (of all possible elements)
-	- $k = |H|$ = maximum size allowed for the hitting set
-		- $H \subseteq U$ = hitting set 
-- goal:
-	- given an instance $\mathcal I = (\mathcal F, U, k)$
-	- find a subset $H$ containing at most $k$ elements that interset with every set in the collection (non-empty intersections $\forall F \in \mathcal F: F \cap H = \emptyset$)
-- hitting set → decision tree:
-	- done with $E(\mathcal I)$
-	- each row in dataset is a set in the collection $F \in \mathcal F$
-	- each feature is a binary flag on whether that set contains the element $u\in U$
-		- i) empty set  $\emptyset$: set all flags to 0 → label: positive
-		- ii) all sets in collection: binary encode → label: negative
-	- any valid decision tree must distinguish the single positive example from all negative examples. this forces it to identify features that "hit" all the negative examples (which represent the sets from $F$)
-	- the features in the decision tree (support set) are equivalent to the nodes that need to be selected to hit all sets in the collection
-	- the reduction preserves the parameter $k$ (hitting set size becomes tree size/depth - the size and depth are the same)
-	- finding the smallest support set (MSS problem) is np-hard
-
-*observation 1*
-
-- 💡✨ the features of a decision tree $T$ are the "support set" of $E$
-- = any decision tree's features must form a support set (seperate positive from negative examples)
-- $\text{feat}(T) = \{\text{feat}(v) \mid v \in V(T)\}$ = all features used for tests
-- proof by contradiction:
-	- assuming two examples with different labels would agree on any of the features / assign the same value to it, then they would wrongly end up in the same leaf (which is impossible)
-
-*theorem 2: sol and Dmax alone do not yield ftp, even if features are boolean*
-
-- 💡✨ DTS and DTD parameterized by $s, d$ are W2-hard even with $D_{\max}\text{=}2$
-- proof:
-	- since hitting set is W2-hard when parameterized by $k$, both DTS and DTD inherit this hardness, which means:
-		- the problems DTS and DTD cannot be solved in FPT time unless W2 = FPT
-		- the hardness holds even when restricted to boolean instances with $D_{\max}\text{=}2$
-- in conclusion: finding optimal trees is really hard. just using the $s, d$ and $D_{\max}$ as problem parameters alone does not yield fixed-parameter tractability FTP, even if $D_{\max}\text{=}2$
-
-*theorem 3*
-
-- 💡✨ DTS and DTD parameterized by $\delta_\max(E)$ are paraNP-hard even with $\Delta{=}2$
-	- $\delta_\max(E(\mathcal I)) = \Delta_\max(\mathcal I)$ = the highest number of features two examples with a different classification can disagree on, is equivalent to the size of the largest set in the collection
-	- the only positive example has all zeros, each negative example has ones exactly in positions corresponding to elements of its set $F$. therefore, the number of disagreements between the only positive and any negative examples equals the size of set $F$
-- 💡✨ DTS and DTD parameterized by $\text{min}_{\#}(E)$ are paraNP-hard
-	- where: $\text{min}_{\#}(E) = \min\{|E^+|, |E^-|\}$
-	- in our reduction $\text{min}_{\#}(E(\mathcal I)) = 1$ because we have a single positive example
-- 💡✨ DTS and DTD parameterized by the number of test nodes are paraNP-hard
-	- due to $\text{min}_{\#}(E(\mathcal I)) = 1$ we have 0 branching nodes, just two leafs from the root
-
-# algorithms
-
-for the sake of simplicity only the DTS problem is mentioned
-
-two stage algorithm:
-
-- i) feature selection = finding a support set $S$ (a small set of features that can distinguish between all positive and negative examples)
-	- → the first stage of the algorithm is discussed last in the paper
-- ii) training = determining how to organize those features into an optimal tree structure
-
-## stage 2: training
-
-*theorem 4*
-
-- 💡✨ given examples $E$, a support set $S$, an integer $s$, there exists an algorithm that runs in time $2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|$ that finds the optimal/smallest decision tree using just the support set for decisions and is smaller than $s$ - if such tree exists, otherwise it returns `nil`
-	- the runtime fits the FPT format of $f(sol) \cdot \text{poly}(n)$, where $f(sol) = 2^{\mathcal{O}(s^2)}$ is the function dependent only on solution size and $\|E\|^{1+o(1)} \log \|E\|$ is polynomial in the input
-- once you have the right set of features (the support set $S$), finding the optimal tree structure is FTP-tractable when parameterized by solution size $s$ only, even though the general problem of finding optimal decision trees is NP-hard
-	- = **the hardness of decision tree learning comes primarily from feature selection, rather than training**
-	- = the running time is only exponential in the size of the solution (the tree size), while remaining polynomial in the input size
-	- = the runtime is bounded by $f(sol) \cdot \text{poly}(n)$, where $f$ is some arbitrary function and $\text{poly}$ is a polynomial function
-	- this suggests that you might be even able to reach FTP tractability using just $\{sol, \delta_\max\}$ without needing $D_\max$
-- the feature selection must make sure to choose $k = |S| \leq s$ features
-- proof follows with the algorithms below
 
 *lemma 5, 6*
 
@@ -213,8 +190,6 @@ two stage algorithm:
 	- iii. we return the smallest of all valid decision trees or `nil` if it doesn't exist
 		- $O(s^s) + O(d^{d^2 / 2} \|E\|^{1+o(1)} \log \|E\|)$
 		- the second term dominates and is the final runtime
-
-## stage 1: feature selection
 
 *theorem 7*
 
