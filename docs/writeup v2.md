@@ -194,6 +194,16 @@ the hardness of decision tree learning comes primarily from feature selection, r
 	- for every example $e \in E[\alpha]$ the set $R$ must contain at least one feature $f$ for which $e$ disagrees with $\beta$, such that the example set $E[\alpha \cup \beta]$ becomes empty
 	- meaning $R \subseteq \delta(e, \beta)$
 
+
+
+
+
+
+
+
+
+---
+
 *lemma 13*
 
 - 💡✨ given examples $E$ there is an assignment $\gamma$ (computable in polynomial time) such that every example disagres with at most $2 \cdot \delta_\max(E)$ features from examples in that assignment.
