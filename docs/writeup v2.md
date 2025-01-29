@@ -197,33 +197,24 @@ proof by contradiction:
 *lemma 12*
 
 - 💡 for any way you assign values to $R$, there's always one feature in $R$ that breaks some equivalence class
-- $\forall \beta: R \mapsto D: \quad R \cap \left( \bigcup_{e \in E(S)} \delta(e, \beta) \right) \neq \emptyset$
+- $\forall \beta: R \mapsto D: \quad R \cap  \{ \delta(e, \beta) \mid e \in E(S) \} \neq \emptyset$
 - $E(S)$ = exactly one example from each possible query $\alpha$ that has a non empty result $E[\alpha]$ → because the same values assigned to a support set feature $f\in S$ might match multiple examples
 - $\delta(e,\beta)$ = set of features where the example and the value assignment to $R$ have different values
 
 *lemma 13*
 
 - 💡 any two examples in $E$ (even if they are both positive or both negative) can differ by at most $2\delta_\max(E)$ features.
-- by copying all values from random examples $\gamma(f) := e(f)$ into some "global assignment function" $\gamma: \text{feat}(E) \mapsto D$ we can be sure that $\forall e \in E: \delta{e, \gamma} = 2 \cdot \delta_\max(E)$
+- if we copy values from arbitary examples $\gamma(f) := e(f)$ into some value assignment function $\gamma: \text{feat}(E) \mapsto D$ we know that $\forall e \in E: \delta(e, \gamma) = 2 \delta_\max(E)$
 - proof: $\delta_{\max}(E)$ is by definition just computed between positive and negative examples. suppose we have two positive examples $e$ and $e''$. the negative example $e'$ differs from $e$ in $d$ features. if $e''$ differs from $e'$ in $d$ features as well (since $\delta_\max$ is $d$), then by triangle inequality, the distance between $e$ and $e''$ is at most $d + d = 2d$.
 
 *lemma 14*
 
-
-
-
-- 💪
+- 💪 we can compute the branching set $R_0$ for $S$ that is at most $D_\max^{|S|} \cdot 2 \delta_\max(E)$ large
+- first factor: $|E(S)| \leq D_\max^{|S|}$
+	- $D_\max^{|S|}$ is an upper bound for the total number of examples you can construct with features from $S$.
+	- each example in $E(S)$ corresponds to a unique combination of feature values from $S$.
+- second factor: $2 \delta_\max(E)$
+	- by copying random values from examples to $\beta: R \mapsto D$ we can be sure that $\{ \delta(e, \beta) \mid e \in E(S)  \}$ has at most $2 \delta_\max(E)$ features
 - $R_0$ - branching set = contains at least one feature from every possible $R$ there is
-- a small branching set can be computed efficiently
-
-
-
-
-- 💡✨ there is a polynomial time algorithm that given a support set $S$ computes the branching set $R_0$ for $S$ of size at most $D_\max^{|S|} \cdot 2 \delta_\max(E)$
-- second factor:
-	- the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$ contains at most $2 \delta_\max(E)$ features for all examples in $E(S)$
-- first factor:
-	- $|E(S)| \leq D^{|S|}_\max$ because for every feature in $S$ we can have at most $D_\max$ values from that domain
-
-
-
+	- $R_0 =   \{ \delta(e, \beta) \mid e \in E(S) \}$ where $\beta$ is constructed by copying arbitrary values from examples, as shown in lemma 13
+- proof: `minDT` algorithm
