@@ -27,12 +27,17 @@
 - $E[\alpha]$ - agreeing examples = query of examples with the same values for features as in the mapping $\alpha$
 	- $E[\alpha] = \{ e \mid e(f) = \alpha(f) \wedge f \in F'\}$ where $\alpha: F' \mapsto D$
 - $\delta(e, e')$ - difference = set of features that two examples have different feature values for / disagree on
-	- $\delta(e_1, e_2) = \forall f: e_1(f) \not= e_2(f)$
+	- $\delta(e_1, e_2) = \forall f: e_1(f) \not= e_2(f)$ = hamming distance of two examples
 - $\delta_\max$ - maximum difference = maximum difference between any two examples with different labels
 	- $\delta_\max(E) = \max_{e^+\in E^+\wedge e^-\in E^-}|\delta(e^+,e^-)|$
-- $S$ - support set = set of features that can distinguish between all positive and negative examples
+- $S$ - support set = set of features that can distinguish between (some but not all) positive and negative examples
 	- any two examples with different labels must disagree in at least one feature of $S$
 	- $\forall e_1 \in E^+, e_2 \in E^-: \exists f \in S: \delta(e_1, e_2) \not = \emptyset$
+- $R$ - additional set = helps support set to distinguish between all positive and negative examples
+	- $R = \text{feat}(T) \textbackslash S$ of an optimal tree $T$ using support set $S$
+
+---
+
 - $T$ - decision tree = unbalanced binary tree $T = (V, A)$ that partitions decision space
 	- has verteces/tests, arcs/edges
 	- each inner node $v$ has a feature $\text{feat}(v)$ and threshold value $\lambda(v)$ assigned to it
@@ -42,8 +47,6 @@
 - $\alpha: v(T) \mapsto \text{feat}(E)$ - feature assignment function = defines test features $\text{feat}(T)$ in tree
 	- this overloads alpha which previously mapped values to features, not features to decision nodes
 - $\gamma: v(T) \mapsto D_E(\alpha(v))$ - threshold assignment function = defines test thresholds $\lambda$ in tree
-
-assumption for complexity analysis: $|E| = |E| \cdot (|feat(E)| + 1) \cdot \log D_{max}$
 
 *observation 1*
 
@@ -63,6 +66,7 @@ for the sake of simplicity most proofs only mention the DTS problem.
 *complexity landscape*
 
 - we can assume the problem parameters to be small
+- we assume $|E| = |E| \cdot (|feat(E)| + 1) \cdot \log D_{max}$
 - FTP tractable = $\{sol, \delta_\max, D_\max\}$
 	- runtime is exponential in a function of the problem params, polynomial in the input size
 	- runtime is bounded by $f(k) \cdot n^{O(1)}$, where $f$ is any computable function of parameter $k$ and $n$ is the input size
@@ -118,7 +122,7 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 *theorem 4*
 
-- 💡 we can compute an optimal decision tree that only uses the given support set $S$ features in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
+- 💪 we can compute an optimal decision tree that only uses the given support set $S$ features in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
 - proof: `findTH` algorithm
 	- the runtime of lemma 6 dominates that of lemma 5 when they're multiplied
 	- we enumerate all $(T, \alpha)$ pairs, then search for a valid $\gamma$ recursively, starting from the root node
@@ -126,13 +130,13 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 *lemma 5*
 
-- 💡 we can enumerate all (pseudo tree $T$, feature assignment $\alpha$) pairs where the assigned features are from the support set $S$ in $O(s^s)$
+- 💪 we can enumerate all (pseudo tree $T$, feature assignment $\alpha$) pairs where the assigned features are from the support set $S$ in $O(s^s)$
 - the number of trees we have to consider is defined by $k$ which is bounded by the solution size $k = |S| \leq s$
 - this means we can just enumerate/brute force all tree structures and feature assignments to nodes, but not all possible thresholds - that will need a heuristic
 
 *lemma 6*
 
-- 💡 we can find valid threshold assignments $\gamma$ for (pseudo tree $T$, feature assignment $\alpha$) pairs in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
+- 💪 we can find valid threshold assignments $\gamma$ for (pseudo tree $T$, feature assignment $\alpha$) pairs in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
 - = number of recursive $\text{findTH}$ calls $\cdot$ runtime of each call
 	- number of recursive calls = $O(\log \|E\|^d)$ because it calls it self at most $\log \|E\| + 2$ times due to binary search
 	- runtime of each call = $O(\|E\| \log \| E \|)$
@@ -146,12 +150,12 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 *theorem 8*
 
-- 💡 $\{sol, \delta_\max, D_\max\}$ yields FTP tractability
+- 💪 $\{sol, \delta_\max, D_\max\}$ yields FTP tractability
 - proof: `minDT` algorithm
 
 *corollary 9*
 
-- 💡 we can enumerate all minimal support sets $S$ that all smaller than $k$ in $O(\delta_\max(E)^k \cdot |E|)$
+- 💡 we can enumerate all minimal support sets $S$ that are smaller than $k$ in $O(\delta_\max(E)^k \cdot |E|)$
 - proof: this is the runtime of the hitting set $O(\Delta^k \cdot |F|)$
 - however, finding minimal support sets isn't sufficient as shown in lemma 10
 
@@ -164,68 +168,69 @@ the hardness of decision tree learning comes primarily from feature selection, r
 *lemma 11*
 
 - 💡 additional features $R = \text{feat}(T) \textbackslash S$ of an optimal tree $T$ using support set $S$ are useful
-- additional features help seperate examples that look identical when only looking at the support features (= equivalence class)
-- what does "useful" mean?
-	- FOR ALL values assigned to additional features ($\beta: R \mapsto D$)
-	- there EXISTS a value assignment to support features ($\alpha: S \mapsto D$) where:
-	    - $E[\alpha]$ is non-empty - some examples match $\alpha$
-	    - $E[\alpha \cup \beta] \subseteq E[\alpha]$ is empty - but none simultaniously match both $\alpha$ and $\beta$
-- proof by contradiction:
-	- assume: $R$ is not empty, otherwise proof is trivial
-	- If the lemma were false, there would EXIST a specific way to set the additional-support features ($\beta$) that FOR ALL support features ($\alpha$) results in $E[\alpha \cup \beta]$ being non-empty
-	- construction of $T'$:
-		- i.) for nodes in $T$ with features in $R$, recursively prune one child (left if $\beta(f) > \lambda$, else right). after removing those subtrees, $T''$ is formed where each node with $R$ features has only one child.
-		- ii.) contract maximal paths of $R$ nodes, making those paths into single edges.
-		- $T'$ ends up with non-leaf nodes only from $S$, each having two children.
-		- if  $T'$ is a valid decision tree, it contradicts our assumption that $T$ had minimum size.
-	- correctness of $T'$:
-		- assuming $T'$ were invalid, we'd find a leaf $l' \in T'$ containing both positive ($e^+$) and negative ($e^-$) examples. these examples would come from different assignments $\alpha^+$ and $\alpha^-$ over the feature set $S$.
-		- now, in the original tree $T$, the path to a leaf is determined by both $S$ and $R$ features. but because we're assuming the lemma is false, this means there's an assignment $\beta$ for $R$ that doesn't split any equivalence classes of $S$.
-		- because of this $\beta$, the examples that reached the mixed leaf $l'$ in $T'$ would also end up in the same leaf $l$ in $T$. why? because $\beta$ doesn't cause any additional splits.
-		- since assuming $T'$ is invalid leads to a contradiction (it would make $T$ invalid too), we must conclude that $T'$ is actually valid.
-	- assuming $R$ is not useful leads to a valid decision tree $T'$ that is smaller $|T'| < |T|$, which contradicts the minimality of $T$. this forces the conclusion that $R$ must be useful, ensuring that no smaller valid decision tree exists.
+- additional features seperate examples that look identical when only looking at the support features (= equivalence class)
 
+definition of "usefulness":
 
+- $\forall \beta: R \to D, \quad \exists \alpha: S \to D \quad$ such that:
+	- $E[\alpha] \neq \emptyset$ (examples exist that match $\alpha$)
+	- $E[\alpha \cup \beta] = \emptyset$ (no examples match both $\alpha$ and $\beta$)
+- where:
+	- $E[\alpha] = \{ e \in E \mid \forall f \in S: e(f) = \alpha(f)  \}$
+	- $E[\alpha \cup \beta] = \{ e \in E \mid \forall f \in S: e(f) = \alpha(f) ~ \wedge ~ \forall f \in R: e(f) = \beta(f)  \}$
+- for every possible "query" of examples using with $R$, one can exclude all examples for at least one "query" with $S$, allowing those to be partitioned
 
+proof by contradiction:
 
-
-
-
-
-
-
-
-
-
-
-
----
+- assume: $R$ is not empty, otherwise proof is trivial
+- If the lemma were false it would imply:
+	- $\exists \beta: R \to D,~ \forall \alpha: S \to D$ such that $E[\alpha \cup \beta] \not= \emptyset$ (some examples match both $\alpha$ and $\beta$).  
+- construction of $T'$:
+	- i.) for nodes in $T$ with features in $R$, recursively prune one child (left if $\beta(f) > \lambda$, else right). after removing those subtrees, $T''$ is formed where each node with $R$ features has only one child.
+	- ii.) contract maximal paths of $R$ nodes, making those paths into single edges.
+	- $T'$ ends up with non-leaf nodes only from $S$, each having two children.
+	- if  $T'$ is a valid decision tree, it contradicts our assumption that $T$ had minimum size.
+- correctness of $T'$:
+	- assuming $T'$ were invalid, we'd find a leaf $l' \in T'$ containing both positive ($e^+$) and negative ($e^-$) examples. these examples would come from different assignments $\alpha^+$ and $\alpha^-$ over the feature set $S$.
+	- now, in the original tree $T$, the path to a leaf is determined by both $S$ and $R$ features. but because we're assuming the lemma is false, this means there's an assignment $\beta$ for $R$ that doesn't split any equivalence classes of $S$.
+	- because of this $\beta$, the examples that reached the mixed leaf $l'$ in $T'$ would also end up in the same leaf $l$ in $T$. why? because $\beta$ doesn't cause any additional splits.
+	- since assuming $T'$ is invalid leads to a contradiction (it would make $T$ invalid too), we must conclude that $T'$ is actually valid.
+- assuming $R$ is not useful leads to a valid decision tree $T'$ that is smaller $|T'| < |T|$, which contradicts the minimality of $T$. this forces the conclusion that $R$ must be useful, ensuring that no smaller valid decision tree exists.
 
 *lemma 12*
 
-- 💡✨ let $E(S)$ contain at least one arbitrary example from each non-empty $E[\alpha]$. then every useful set $R$ must contain at least one feature from the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$
-- branching set $R_0$ = every useful set $R$ for support set $S$ must contain at least one feature from $R_0$
-- idea:
-	- for every $R$ there must be some equivalence class (that can't be distinguished) under $S$ that becomes empty (distinguishable) when you add $R$'s features to test nodes
-	- for every example $e \in E[\alpha]$ the set $R$ must contain at least one feature $f$ for which $e$ disagrees with $\beta$, such that the example set $E[\alpha \cup \beta]$ becomes empty
-	- meaning $R \subseteq \delta(e, \beta)$
+- 💡 for any way you assign values to $R$, there's always one feature in $R$ that breaks some equivalence class
+- $\forall \beta: R \mapsto D: \quad R \cap \left( \bigcup_{e \in E(S)} \delta(e, \beta) \right) \neq \emptyset$
+- $E(S)$ = exactly one example from each possible query $\alpha$ that has a non empty result $E[\alpha]$ → because the same values assigned to a support set feature $f\in S$ might match multiple examples
+- $\delta(e,\beta)$ = set of features where the example and the value assignment to $R$ have different values
+
 
 *lemma 13*
 
-- 💡✨ given examples $E$ there is an assignment $\gamma$ (computable in polynomial time) such that every example disagres with at most $2 \cdot \delta_\max(E)$ features from examples in that assignment.
-- the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$ can get large, so we have to bound it
-- global assignment $\gamma$ = subset of examples that disagree with at most $2 \cdot \delta_\max(E)$ features, efficient to compute
-- works by just copying
-- if you pick any example $e_1$ and use its values for $\gamma$, then any other example $e_2$ can differ from $e_1$ in at most $2 \delta_\max(E)$ features
-	- this is by the definition of $\delta_\max(E)$ being the maximum number of features where a positive and negative example can differ
-	- because both $e_1$ and $e_2$ can only differ from $e$ at most in $\delta_\max(E)$ features
+- 💡 any two examples in $E$ (even if they are both positive or both negative) can differ by at most $2\delta_\max(E)$ features.
+- proof: suppose we have two positive examples $e$ and $e''$. the negative example $e'$ differs from $e$ in $d$ features. if $e''$ differs from $e'$ in $d$ features as well (since $\delta_\max$ is $d$), then by triangle inequality, the distance between $e$ and $e''$ is at most $d + d = 2d$.
+- by copying all values from examples $\gamma(f) := e(f)$ into some assignment function $\gamma: \text{feat}(E) \mapsto D$ 
+- suppose if you want to have an assignment of values to features $\gamma: \text{feat}(E) \mapsto D$ such that every example in the dataset disagrees with the assignments at in at most $2\delta_\max(E)$ features. all you have to do is pick a random feature and copy the value $\gamma(f) := e(f)$
+
+
+
+
+
 
 *lemma 14*
+
+- 💪
+- $R_0$ - branching set = contains at least one feature from every possible $R$ there is
+- a small branching set can be computed efficiently
+
+
+
 
 - 💡✨ there is a polynomial time algorithm that given a support set $S$ computes the branching set $R_0$ for $S$ of size at most $D_\max^{|S|} \cdot 2 \delta_\max(E)$
 - second factor:
 	- the union of disagreements $\bigcup_{e \in E(S)} \delta(e, \beta)$ contains at most $2 \delta_\max(E)$ features for all examples in $E(S)$
 - first factor:
 	- $|E(S)| \leq D^{|S|}_\max$ because for every feature in $S$ we can have at most $D_\max$ values from that domain
+
 
 
