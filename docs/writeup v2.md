@@ -204,20 +204,16 @@ proof by contradiction:
 - $E(S)$ = exactly one example from each possible query $\alpha$ that has a non empty result $E[\alpha]$ → because the same values assigned to a support set feature $f\in S$ might match multiple examples
 - $\delta(e,\beta)$ = set of features where the example and the value assignment to $R$ have different values
 
-
 *lemma 13*
 
 - 💡 any two examples in $E$ (even if they are both positive or both negative) can differ by at most $2\delta_\max(E)$ features.
-- proof: suppose we have two positive examples $e$ and $e''$. the negative example $e'$ differs from $e$ in $d$ features. if $e''$ differs from $e'$ in $d$ features as well (since $\delta_\max$ is $d$), then by triangle inequality, the distance between $e$ and $e''$ is at most $d + d = 2d$.
-- by copying all values from examples $\gamma(f) := e(f)$ into some assignment function $\gamma: \text{feat}(E) \mapsto D$ 
-- suppose if you want to have an assignment of values to features $\gamma: \text{feat}(E) \mapsto D$ such that every example in the dataset disagrees with the assignments at in at most $2\delta_\max(E)$ features. all you have to do is pick a random feature and copy the value $\gamma(f) := e(f)$
-
-
-
-
-
+- by copying all values from random examples $\gamma(f) := e(f)$ into some "global assignment function" $\gamma: \text{feat}(E) \mapsto D$ we can be sure that $\forall e \in E: \delta{e, \gamma} = 2 \cdot \delta_\max(E)$
+- proof: $\delta_{\max}(E)$ is by definition just computed between positive and negative examples. suppose we have two positive examples $e$ and $e''$. the negative example $e'$ differs from $e$ in $d$ features. if $e''$ differs from $e'$ in $d$ features as well (since $\delta_\max$ is $d$), then by triangle inequality, the distance between $e$ and $e''$ is at most $d + d = 2d$.
 
 *lemma 14*
+
+
+
 
 - 💪
 - $R_0$ - branching set = contains at least one feature from every possible $R$ there is
