@@ -35,9 +35,6 @@
 	- $\forall e_1 \in E^+, e_2 \in E^-: \exists f \in S: \delta(e_1, e_2) \not = \emptyset$
 - $R$ - additional set = helps support set to distinguish between all positive and negative examples
 	- $R = \text{feat}(T) \textbackslash S$ of an optimal tree $T$ using support set $S$
-
----
-
 - $T$ - decision tree = unbalanced binary tree $T = (V, A)$ that partitions decision space
 	- has verteces/tests, arcs/edges
 	- each inner node $v$ has a feature $\text{feat}(v)$ and threshold value $\lambda(v)$ assigned to it
