@@ -1,7 +1,10 @@
 import itertools
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
+
+sys.setrecursionlimit(1 << 25)  # increase recursion limit for deep trees
 
 
 @dataclass
@@ -40,15 +43,15 @@ def mindt(examples: List[Example], s: int) -> Optional[Node]:
 
 def mindts(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
     """find minimal tree using features in S and branch with R0 (algorithm 4)"""
-    # step 1: find minimal tree with features S
+    # find minimal tree with features S
     current_tree = find_minimal_tree(examples, S, s)
     if current_tree is None:
         return None
 
-    # step 2: compute branching set R0
+    # compute branching set R0
     R0 = compute_branching_set(examples, S)
 
-    # step 3: recursively try adding each feature in R0
+    # recursively try adding each feature in R0
     best_tree = current_tree
     for f in R0:
         new_S = S.union({f})
