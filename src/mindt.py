@@ -32,19 +32,18 @@ def minDT(examples: List[Example], s: int) -> Optional[Node]:
 
 def minDTS(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
     """find minimal tree using features in S and branch with R0 (algorithm 4)"""
-
-    # Step 1: Find minimal tree with features S
+    # step 1: find minimal tree with features S
     current_tree = find_minimal_tree(examples, S, s)
     if current_tree is None:
         return None
 
-    # Step 2: Compute branching set R0
+    # step 2: compute branching set R0
     R0 = compute_branching_set(examples, S)
 
-    # Step 3: Recursively try adding each feature in R0
+    # step 3: recursively try adding each feature in R0
     best_tree = current_tree
-    for v in R0:
-        new_S = S.union({v})
+    for f in R0:
+        new_S = S.union({f})
         if len(new_S) > s:
             continue
         subtree = minDTS(examples, s, new_S)
@@ -55,44 +54,32 @@ def minDTS(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
 
 def compute_global_assignment(examples: List[Example]) -> Dict[str, int]:
     """compute global assignment gamma (lemma 13)"""
-    if not examples:
-        return {}
-    return examples[0].features  # pick first example's features
+    # TODO: implement
+    pass
 
 
 def enumerate_minimal_support_sets(examples: List[Example], s: int) -> List[Set[str]]:
-    """enumeration of minimal support sets (Corollary 9)."""
-    # In practice, implement hitting set enumeration. Here, return all single-feature sets.
-    features = set(examples[0].features.keys()) if examples else set()
-    return [set([f]) for f in features][:s]  # Simplified for demonstration
+    """enumeration of minimal support sets (corollary 9)"""
+    # TODO: implement
+    pass
+
+
+def find_minimal_tree(examples: List[Example], S: Set[str], s: int) -> Optional[Node]:
+    """find minimal tree using features in S (theorem 4)"""
+    # TODO: implement
+    pass
+
+
+def compute_branching_set(examples: List[Example], S: Set[str]) -> Set[str]:
+    """compute branching set R0 for support set S (lemma 14)."""
+    # TODO: implement
+    pass
 
 
 def count_nodes(tree: Optional[Node]) -> int:
     if tree is None or tree.is_leaf:
         return 0
     return 1 + count_nodes(tree.left) + count_nodes(tree.right)
-
-
-def compute_branching_set(examples: List[Example], S: Set[str]) -> Set[str]:
-    """Compute branching set R0 for support set S (Lemma 14, simplified)."""
-    # Simplified: return all features not in S
-    all_features = set(examples[0].features.keys()) if examples else set()
-    return all_features - S
-
-
-def find_minimal_tree(examples: List[Example], S: Set[str], s: int) -> Optional[Node]:
-    """Find minimal tree using features in S (Theorem 4, simplified)."""
-    # Generate all possible single-node trees for demonstration
-    if s < 1:
-        return None
-    for f in S:
-        node = Node(feature=f)
-        feature_assignment = {id(node): f}
-        thresholds = findth(examples, node, feature_assignment)
-        if thresholds is not None:
-            node.threshold = thresholds.get(f, 0)
-            return node
-    return None
 
 
 #
