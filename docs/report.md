@@ -93,9 +93,9 @@ header-includes:
 
 # hardness results
 
-theorem 2 reduces the hitting set problem HS to DTS/DTD and shows that $\{sol,  D_{\max}\}$ alone do not yield FTP tractability, even if all the features are booleans.
+theorem 2 reduces the hitting set problem HS to DTS/DTD and shows that $\{sol,  D_{\max}\}$ alone do not yield FPT tractability, even if all the features are booleans.
 
-however, when the hitting set has a bounded size, the problem becomes FTP tractable. this is equivalent to $\delta_{\max}$ in our original problem and is naturally small for most datasets (see table 1). this approach to finding parameters is called "deconstruction of intractability".
+however, when the hitting set has a bounded size, the problem becomes fixed-parameter tractable. this is equivalent to $\delta_{\max}$ in our original problem and is naturally small for most datasets (see table 1). this approach to finding parameters is called "deconstruction of intractability".
 
 theorem 8 confirms this finding by showing the final algorithm.
 
@@ -105,7 +105,7 @@ for the sake of simplicity most proofs only mention the DTS problem.
 
 - we can assume the problem parameters to be small
 - we assume $|E| = |E| \cdot (|feat(E)| + 1) \cdot \log D_{max}$
-- FTP tractable = $\{sol, \delta_{\max}, D_{\max}\}$
+- FPT = $\{sol, \delta_{\max}, D_{\max}\}$
 	- runtime is exponential in a function of the problem params, polynomial in the input size
 	- runtime is bounded by $f(k) \cdot n^{O(1)}$, where $f$ is any computable function of parameter $k$ and $n$ is the input size
 	- author's assume $D_{\max}$ might be redundant
@@ -115,13 +115,13 @@ for the sake of simplicity most proofs only mention the DTS problem.
 	- runtime is bounded by $n^{f(k)}$, where $f$ is any computable function of parameter $k$ and $n$ is the input size
 - w[2] tractable = $\{sol\},~ \{sol,  D_{\max}\}$
 	- problem can be solved by a circuit with $t$ layers of gates with many inputs
-	- strong evidence that a problem is not FTP
+	- strong evidence that a problem is not FPT
 - paraNP hard = $\emptyset,~ \{\delta_{\max}\},~ \{D_{\max}\},~ \{\delta_{\max}, D_{\max}\}$
 	- problem remains NP-hard even when the parameters are fixed to a constant
 
 *threorem 2*
 
-- intuition: $\{sol,  D_{\max}\}$ does not yield FTP tractability, even if all the features are booleans – because it's W[2] tractable
+- intuition: $\{sol,  D_{\max}\}$ does not yield fixed-parameter tractability, even if all the features are booleans – because it's W[2] tractable
 - proof: you can reduce the hitting set problem HS to the optimal decision tree problem DTS/DTD
 - any valid decision tree must distinguish the single positive example from all negative examples with a single split. this forces it to identify all features that "hit" all the negative examples
 
@@ -142,14 +142,14 @@ hitting set problem:
 
 *theorem 3*
 
-- intuition: $\{\delta_{\max}(E)\}$ does not yield FTP tractability, even if all the features are booleans – because it's paraNP-hard tractable
+- intuition: $\{\delta_{\max}(E)\}$ does not yield FPT tractability, even if all the features are booleans – because it's paraNP-hard
 	- proof: $\delta_{\max}(E(\mathcal I)) = \Delta_{\max}(\mathcal I)$
 	- the highest number of features two examples with a different classification can disagree on, is equivalent to the size of the largest set in the collection
 	- the only positive example has all zeros, each negative example has ones exactly in positions corresponding to elements of its set $F$. therefore, the number of disagreements between the only positive and any negative examples equals the size of set $F$
-- intuition: $\{\text{min}_{\#}(E)\}$ does not yield FTP tractability – because it's paraNP-hard tractable
+- intuition: $\{\text{min}_{\#}(E)\}$ does not yield FPT tractability – because it's paraNP-hard
 	- where: $\text{min}_{\#}(E) = \min\{|E^+|, |E^-|\}$
 	- proof: in our reduction $\text{min}_{\#}(E(\mathcal I)) = 1$ because we have a single positive example
-- intuition: num of inner nodes does not yield FTP tractability – because it's paraNP-hard tractable
+- intuition: num of inner nodes does not yield FPT tractability – because it's paraNP-hard
 	- proof: due to $\text{min}_{\#}(E(\mathcal I)) = 1$ we have 0 branching nodes, just two leafs
 
 # algorithm
@@ -183,13 +183,13 @@ the hardness of decision tree learning comes primarily from feature selection, r
 *theorem 7*
 
 - intuition: without any feature selection, just by enumerating the $O(|\text{feat}(E)|^s)$ possible support sets, we can solve the entire problem in $O(|\text{feat}(E)|^s \cdot 2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
-- this runtime is XP-tractable parametrized by $s$, but not FPT tractable because the degree of the polynomial depends on parameter $s$
+- this runtime is XP-tractable parametrized by $s$, but not fixed-parameter tractable because the degree of the polynomial depends on parameter $s$
 
 ## stage 1: feature selection
 
 *theorem 8*
 
-- intuition: $\{sol, \delta_{\max}, D_{\max}\}$ yields FTP tractability
+- intuition: $\{sol, \delta_{\max}, D_{\max}\}$ yields FPT tractability
 - proof: `minDT` algorithm
 
 *corollary 9*
