@@ -21,6 +21,9 @@ class Node:
 
 def mindt(examples: List[Example], s: int) -> Optional[Node]:
     """find minimal decision tree with at most s nodes (algorithm 3)"""
+    if not examples:
+        return None
+
     global gamma
     gamma = compute_global_assignment(examples)
 
@@ -30,10 +33,11 @@ def mindt(examples: List[Example], s: int) -> Optional[Node]:
         tree = mindts(examples, s, S)
         if tree and (best_tree is None or count_nodes(tree) < count_nodes(best_tree)):
             best_tree = tree
-    return best_tree
+
+    return best_tree if best_tree and count_nodes(best_tree) <= s else None
 
 
-def mindts(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
+def mindts(examples: List[Example], s: int, S: Set[str], gamma: Dict[str, int]) -> Optional[Node]:
     """find minimal tree using features in S and branch with R0 (algorithm 4)"""
     # step 1: find minimal tree with features S
     current_tree = find_minimal_tree(examples, S, s)
@@ -47,19 +51,15 @@ def mindts(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
     best_tree = current_tree
     for f in R0:
         new_S = S.union({f})
-        if len(new_S) > s:
-            continue
-        subtree = mindts(examples, s, new_S)
-        if subtree is not None and (count_nodes(subtree) < count_nodes(best_tree)):
+        subtree = mindts(examples, s, new_S, gamma)
+        if subtree and count_nodes(subtree) < count_nodes(best_tree):
             best_tree = subtree
     return best_tree if count_nodes(best_tree) <= s else None
 
 
 def compute_global_assignment(examples: List[Example]) -> Dict[str, int]:
     """compute global assignment gamma (lemma 13)"""
-    if not examples:
-        return {}
-    return examples[0].features.copy()  # choose first (arbitrary)
+    return examples[0].features.copy() if examples else {}  # first assignment (arbitrary)
 
 
 def enumerate_minimal_support_sets(examples: List[Example], s: int) -> List[Set[str]]:
