@@ -186,7 +186,7 @@ def compute_branching_set(examples: List[Example], S: Set[str]) -> Set[str]:
     # compute δ(e, γ) for each representative
     R0 = set()
     for e in E_S:
-        delta = {f for f, val in e.features.items() if gamma.get(f) != val}  # values don't match
+        delta = {f for f, val in e.features.items() if gamma.get(f) != val}
         R0.update(delta)
 
     return R0
