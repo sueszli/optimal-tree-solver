@@ -35,7 +35,7 @@ header-includes:
     - \usepackage{nopageno}
 ---
 
-**Source:** A Ordyniak, S., & Szeider, S. (2021). Parameterized Complexity of Small Decision Tree Learning. Proceedings of the AAAI Conference on Artificial Intelligence, 35 (7), 6454-6462. [https://www.ac.tuwien.ac.at/files/tr/ac-tr-21-002.pdf](https://www.ac.tuwien.ac.at/files/tr/ac-tr-21-002.pdf).
+**Source:** A Ordyniak, S., & Szeider, S. (2021). Parameterized Complexity of Small Decision Tree Learning. Proceedings of the AAAI Conference on Artificial Intelligence, 35 (7), 6454-6462.
 
 ---
 
