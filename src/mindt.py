@@ -1,124 +1,101 @@
-# 
-# relies on `findth.py`
-# only solves DTS, not DTD
-# 
-
-from typing import Dict, List, Optional, Set
+import itertools
 from dataclasses import dataclass
-from collections import defaultdict
+from typing import Dict, List, Optional, Set
+
 
 @dataclass
 class Example:
-    features: Dict[str, int]  # feature name -> value
-    is_positive: bool # label
+    features: Dict[str, int]
+    is_positive: bool
 
-@dataclass 
+
+@dataclass
 class Node:
-    feature: Optional[str] = None  # None for leaf nodes
-    threshold: Optional[int] = None # split: <= threshold left, > threshold right
-    left: Optional['Node'] = None
-    right: Optional['Node'] = None
+    feature: Optional[str] = None
+    threshold: Optional[int] = None
+    left: Optional["Node"] = None
+    right: Optional["Node"] = None
     is_leaf: bool = False
-    is_positive: Optional[bool] = None  # only for leaf nodes
+    is_positive: Optional[bool] = None
 
-def get_domain_values(examples: List[Example], feature: str) -> List[int]:
-    """Get sorted unique values for a feature across examples"""
-    values = set()
-    for e in examples:
-        if feature in e.features:
-            values.add(e.features[feature])
-    return sorted(list(values))
 
-def split_examples(examples: List[Example], feature: str, threshold: int) -> tuple[List[Example], List[Example]]:
-    """Split examples into left (≤ threshold) and right (> threshold)"""
-    left, right = [], []
-    for e in examples:
-        if feature in e.features:
-            if e.features[feature] <= threshold:
-                left.append(e)
-            else:
-                right.append(e)
-    return left, right
+def is_support_set(examples: List[Example], features: Set[str]) -> bool:
+    pos = [e for e in examples if e.is_positive]
+    neg = [e for e in examples if not e.is_positive]
+    return all(any(p.features[f] != n.features[f] for f in features) for p in pos for n in neg)
 
-def is_uniform(examples: List[Example]) -> Optional[bool]:
-    """Check if all examples have same label. Returns None if empty."""
+
+def generate_minimal_support_sets(examples: List[Example], max_size: int) -> List[Set[str]]:
+    all_features = set(examples[0].features.keys()) if examples else set()
+    for size in range(1, max_size + 1):
+        for candidate in itertools.combinations(all_features, size):
+            candidate_set = set(candidate)
+            if is_support_set(examples, candidate_set):
+                return [candidate_set]  # Simplified minimal set generation
+    return []
+
+
+def build_optimal_tree(examples: List[Example], features: Set[str], max_size: int) -> Optional[Node]:
+    # Simplified tree building - in practice would generate all possible tree structures
     if not examples:
         return None
-    return all(e.is_positive == examples[0].is_positive for e in examples)
 
-def minDT(examples: List[Example], features: Set[str], size_bound: int) -> Optional[Node]:
-    """Find minimum size decision tree using given features"""
-    # Base cases
-    if not examples:
-        return Node(is_leaf=True, is_positive=True)  # Default to positive
-    
-    uniform = is_uniform(examples)
-    if uniform is not None:
-        return Node(is_leaf=True, is_positive=uniform)
-    
-    if size_bound <= 0:
-        return None
-        
-    # Try each feature and threshold
-    best_tree = None
+    # Base case: all examples same class
+    if all(e.is_positive for e in examples):
+        return Node(is_leaf=True, is_positive=True)
+    if all(not e.is_positive for e in examples):
+        return Node(is_leaf=True, is_positive=False)
+
+    # Try features and thresholds (simplified)
     for feature in features:
-        domain_values = get_domain_values(examples, feature)
-        
-        for threshold in domain_values:
-            left_examples, right_examples = split_examples(examples, feature, threshold)
-            
-            # Recursively build subtrees
-            left_tree = minDT(left_examples, features, size_bound - 1)
-            if left_tree is None:
-                continue
-                
-            right_tree = minDT(right_examples, features, size_bound - 1)
-            if right_tree is None:
-                continue
-            
-            # Valid tree found
-            tree = Node(
-                feature=feature,
-                threshold=threshold,
-                left=left_tree,
-                right=right_tree
-            )
-            best_tree = tree
-            break
-            
-        if best_tree is not None:
-            break
-            
-    return best_tree
+        values = sorted({e.features[feature] for e in examples})
+        for threshold in values:
+            left = [e for e in examples if e.features[feature] <= threshold]
+            right = [e for e in examples if e.features[feature] > threshold]
 
-def minDTS(examples: List[Example], size_bound: int) -> Optional[Node]:
-    """Find minimum size decision tree"""
-    # Get all features
-    features = set()
-    for e in examples:
-        features.update(e.features.keys())
-    
-    # Try increasingly larger feature subsets
-    for size in range(1, min(len(features), size_bound) + 1):
-        # Try each feature subset of current size
-        for feature_subset in get_feature_subsets(features, size):
-            tree = minDT(examples, feature_subset, size_bound)
-            if tree is not None:
-                return tree
-    
+            left_tree = build_optimal_tree(left, features, max_size - 1)
+            right_tree = build_optimal_tree(right, features, max_size - 1)
+
+            if left_tree and right_tree:
+                return Node(feature=feature, threshold=threshold, left=left_tree, right=right_tree)
     return None
 
-def get_feature_subsets(features: Set[str], size: int) -> List[Set[str]]:
-    """Helper to get all feature subsets of given size"""
-    if size == 0:
-        return [set()]
-    if not features:
-        return []
-    
-    feature = next(iter(features))
-    rest = features - {feature}
-    
-    with_feature = [{feature} | s for s in get_feature_subsets(rest, size-1)]
-    without_feature = get_feature_subsets(rest, size)
-    
-    return with_feature + without_feature
+
+def minDTS(examples: List[Example], s: int, S: Set[str], current_features: Set[str]) -> Optional[Node]:
+    if len(current_features) > s:
+        return None
+
+    # Build tree with current features
+    tree = build_optimal_tree(examples, current_features, s)
+    if not tree:
+        return None
+
+    # Simplified branching set (paper's R0)
+    remaining_features = set(examples[0].features.keys()) - current_features if examples else set()
+
+    # Try adding each feature from branching set
+    best_tree = tree
+    for f in remaining_features:
+        new_tree = minDTS(examples, s, S, current_features | {f})
+        if new_tree and count_nodes(new_tree) < count_nodes(best_tree):
+            best_tree = new_tree
+
+    return best_tree if count_nodes(best_tree) <= s else None
+
+
+def minDT(examples: List[Example], s: int) -> Optional[Node]:
+    minimal_support_sets = generate_minimal_support_sets(examples, s)
+    best_tree = None
+
+    for support_set in minimal_support_sets:
+        tree = minDTS(examples, s, support_set, support_set.copy())
+        if tree and (not best_tree or count_nodes(tree) < count_nodes(best_tree)):
+            best_tree = tree
+
+    return best_tree
+
+
+def count_nodes(tree: Optional[Node]) -> int:
+    if not tree or tree.is_leaf:
+        return 0
+    return 1 + count_nodes(tree.left) + count_nodes(tree.right)
