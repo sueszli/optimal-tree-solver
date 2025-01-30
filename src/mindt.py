@@ -23,6 +23,11 @@ class Node:
     is_positive: Optional[bool] = None  # only for leaf nodes
 
 
+#
+# stage 1
+#
+
+
 def mindt(examples: List[Example], s: int) -> Optional[Node]:
     """find minimal decision tree with at most s nodes (algorithm 3)"""
     if not examples:
@@ -68,7 +73,88 @@ def compute_global_assignment(examples: List[Example]) -> Dict[str, int]:
 
 def enumerate_minimal_support_sets(examples: List[Example], s: int) -> List[Set[str]]:
     """enumeration of minimal support sets of size up to s (corollary 9)"""
-    # TODO: implement this
+    # using a backtracking approach
+
+    # compute all delta sets (differences between positive and negative examples)
+    delta_sets = []
+    E_plus = [e for e in examples if e.is_positive]
+    E_minus = [e for e in examples if not e.is_positive]
+
+    for e_p in E_plus:
+        for e_m in E_minus:
+            delta = set()
+            # collect all features present in either example
+            all_features = set(e_p.features.keys()).union(e_m.features.keys())
+            for f in all_features:
+                val_p = e_p.features.get(f, None)
+                val_m = e_m.features.get(f, None)
+                if val_p != val_m:
+                    delta.add(f)
+            if delta:  # ensure delta is non-empty (as per CI definition)
+                delta_sets.append(frozenset(delta))
+
+    # remove duplicate delta sets
+    unique_delta = list({d for d in delta_sets if d})
+    if not unique_delta:
+        return []  # no differences to cover
+
+    results = set()
+
+    def backtrack(current_set: Set[str], index: int):
+        if index == len(unique_delta):
+            # check if current_set is minimal
+            for f in list(current_set):
+                subset = current_set - {f}
+                # check if subset is a hitting set
+                is_hitting = True
+                for d in unique_delta:
+                    if not subset & d:
+                        is_hitting = False
+                        break
+                if is_hitting:
+                    return  # not minimal
+            if len(current_set) <= s:
+                results.add(frozenset(current_set))
+            return
+
+        current_d = unique_delta[index]
+        # check if current_set already hits current_d
+        if current_set & current_d:
+            backtrack(current_set, index + 1)
+        else:
+            for f in current_d:
+                new_set = current_set | {f}
+                if len(new_set) > s:
+                    continue
+                # prune if new_set is a superset of any existing result
+                if any(existing.issubset(new_set) for existing in results):
+                    continue
+                backtrack(new_set, index + 1)
+
+    backtrack(set(), 0)
+
+    # filter to ensure minimality (remove sets that have subsets in results)
+    minimal_support = []
+    for candidate in results:
+        candidate_set = set(candidate)
+        if len(candidate_set) > s:
+            continue
+        is_minimal = True
+        # check all subsets with one fewer element
+        for f in candidate_set:
+            subset = candidate_set - {f}
+            if subset in results:
+                is_minimal = False
+                break
+        if is_minimal:
+            minimal_support.append(candidate_set)
+
+    # remove duplicates and sort by size and elements for deterministic order
+    minimal_support = list({frozenset(s): s for s in minimal_support}.values())
+    minimal_support = [set(s) for s in minimal_support]
+    minimal_support.sort(key=lambda x: (len(x), sorted(x)))
+
+    return minimal_support
 
 
 def find_minimal_tree(examples: List[Example], S: Set[str], s: int) -> Optional[Node]:
