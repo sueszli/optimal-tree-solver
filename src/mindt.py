@@ -1,3 +1,8 @@
+# 
+# relies on `findth.py`
+# only solves DTS, not DTD
+# 
+
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 from collections import defaultdict

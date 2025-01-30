@@ -119,21 +119,22 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 *theorem 4*
 
-- 💪 we can compute an optimal decision tree that only uses the given support set $S$ features in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
-- proof: `findTH` algorithm
+- 💡 we can compute an optimal decision tree that only uses the given support set $S$ features in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$
+- runtime
 	- the runtime of lemma 6 dominates that of lemma 5 when they're multiplied
 	- we enumerate all $(T, \alpha)$ pairs, then search for a valid $\gamma$ recursively, starting from the root node
 	- monotonicity property of thresholds = it suffices to find the maximum threshold $t \in D_E(f)$ for each node, which can be done with binary search
+- proof: `findTH` algorithm
 
 *lemma 5*
 
-- 💪 we can enumerate all (pseudo tree $T$, feature assignment $\alpha$) pairs where the assigned features are from the support set $S$ in $O(s^s)$
+- 💡 we can enumerate all (pseudo tree $T$, feature assignment $\alpha$) pairs where the assigned features are from the support set $S$ in $O(s^s)$
 - the number of trees we have to consider is defined by $k$ which is bounded by the solution size $k = |S| \leq s$
 - this means we can just enumerate/brute force all tree structures and feature assignments to nodes, but not all possible thresholds - that will need a heuristic
 
 *lemma 6*
 
-- 💪 we can find valid threshold assignments $\gamma$ for (pseudo tree $T$, feature assignment $\alpha$) pairs in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
+- 💡 we can find valid threshold assignments $\gamma$ for (pseudo tree $T$, feature assignment $\alpha$) pairs in $O(2^{\mathcal{O}(s^2)}\|E\|^{1+o(1)} \log \|E\|)$ where $d \leq s$
 - = number of recursive $\text{findTH}$ calls $\cdot$ runtime of each call
 	- number of recursive calls = $O(\log \|E\|^d)$ because it calls it self at most $\log \|E\| + 2$ times due to binary search
 	- runtime of each call = $O(\|E\| \log \| E \|)$
@@ -147,7 +148,7 @@ the hardness of decision tree learning comes primarily from feature selection, r
 
 *theorem 8*
 
-- 💪 $\{sol, \delta_\max, D_\max\}$ yields FTP tractability
+- 💡 $\{sol, \delta_\max, D_\max\}$ yields FTP tractability
 - proof: `minDT` algorithm
 
 *corollary 9*
@@ -203,18 +204,18 @@ proof by contradiction:
 
 *lemma 13*
 
-- 💡 any two examples in $E$ (even if they are both positive or both negative) can differ by at most $2\delta_\max(E)$ features.
-- if we copy values from arbitary examples $\gamma(f) := e(f)$ into some value assignment function $\gamma: \text{feat}(E) \mapsto D$ we know that $\forall e \in E: \delta(e, \gamma) = 2 \delta_\max(E)$
-- proof: $\delta_{\max}(E)$ is by definition just computed between positive and negative examples. suppose we have two positive examples $e$ and $e''$. the negative example $e'$ differs from $e$ in $d$ features. if $e''$ differs from $e'$ in $d$ features as well (since $\delta_\max$ is $d$), then by triangle inequality, the distance between $e$ and $e''$ is at most $d + d = 2d$.
+- 💡 copying an arbitrary example $e\in E: \gamma(f) := e(f)$ to construct an assignment function $\gamma: \text{feat}(E) \mapsto D$ limits the number of features any example can disagree with $\forall e' \in E: \delta(e, \gamma) \leq 2 \delta_\max(E)$
+- proof: for any example $e' \in E$, there exists an example with a different label $e''$ such that $\delta(e', e'') \leq \delta_{\max}(E)$ (by definition of $\delta_{\max}$). since $\delta(\gamma, e'') \leq \delta_{\max}(E)$, it follows that $\delta(\gamma, e') \leq 2\delta_{\max}(E)$
 
 *lemma 14*
 
-- 💪 we can compute the branching set $R_0$ for $S$ that is at most $D_\max^{|S|} \cdot 2 \delta_\max(E)$ large
-- first factor: $|E(S)| \leq D_\max^{|S|}$
-	- $D_\max^{|S|}$ is an upper bound for the total number of examples you can construct with features from $S$.
-	- each example in $E(S)$ corresponds to a unique combination of feature values from $S$.
-- second factor: $2 \delta_\max(E)$
-	- by copying random values from examples to $\beta: R \mapsto D$ we can be sure that $\{ \delta(e, \beta) \mid e \in E(S)  \}$ has at most $2 \delta_\max(E)$ features
+- 💡 we can compute the branching set $R_0$ for $S$ that is at most $D_\max^{|S|} \cdot 2 \delta_\max(E)$ large
 - $R_0$ - branching set = contains at least one feature from every possible $R$ there is
-	- $R_0 =   \{ \delta(e, \beta) \mid e \in E(S) \}$ where $\beta$ is constructed by copying arbitrary values from examples, as shown in lemma 13
-- proof: `minDT` algorithm
+	- $R_0 =   \{ \delta(e, \gamma) \mid e \in E(S) \}$ where $\gamma$ is from lemma 13
+	- by fixing $\gamma$ as an arbitrary example, disagreements between $\gamma$ and any $e \in E(S)$ are bounded by $2\delta_{\text{max}}$, and collecting ALL such disagreements across $E(S)$ ensures $R_0$ contains every feature needed to "break" non-uniform equivalence classes.
+- proof:
+	- first factor: $|E(S)| \leq D_\max^{|S|}$
+		- $D_\max^{|S|}$ is an upper bound for the total number of examples you can construct with features from $S$.
+		- each example in $E(S)$ corresponds to a unique combination of feature values from $S$.
+	- second factor: $2 \delta_\max(E)$
+		- by copying arbitrary values from examples to $\beta: R \mapsto D$ we can be sure that $\{ \delta(e, \beta) \mid e \in E(S)  \}$ has at most $2 \delta_\max(E)$ features
