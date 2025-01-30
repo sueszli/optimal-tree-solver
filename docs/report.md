@@ -222,7 +222,7 @@ definition of "usefulness":
 proof by contradiction:
 
 - assume: $R$ is not empty, otherwise proof is trivial
-- If the lemma were false it would imply:
+- if the lemma were false it would imply:
 	- $\exists \beta: R \to D,~ \forall \alpha: S \to D$ such that $E[\alpha \cup \beta] \not= \emptyset$ (some examples match both $\alpha$ and $\beta$).  
 - construction of $T'$:
 	- i.) for nodes in $T$ with features in $R$, recursively prune one child (left if $\beta(f) > \lambda$, else right). after removing those subtrees, $T''$ is formed where each node with $R$ features has only one child.
