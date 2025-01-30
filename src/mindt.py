@@ -1,22 +1,23 @@
 import itertools
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 
 @dataclass
 class Example:
-    features: Dict[str, int]
-    is_positive: bool
+    features: Dict[str, int]  # feature name -> value
+    is_positive: bool  # label
 
 
 @dataclass
 class Node:
-    feature: Optional[str] = None
-    threshold: Optional[int] = None
+    feature: Optional[str] = None  # None for leaf nodes
+    threshold: Optional[int] = None  # split: <= threshold left, > threshold right
     left: Optional["Node"] = None
     right: Optional["Node"] = None
     is_leaf: bool = False
-    is_positive: Optional[bool] = None
+    is_positive: Optional[bool] = None  # only for leaf nodes
 
 
 def mindt(examples: List[Example], s: int) -> Optional[Node]:
@@ -37,7 +38,7 @@ def mindt(examples: List[Example], s: int) -> Optional[Node]:
     return best_tree if best_tree and count_nodes(best_tree) <= s else None
 
 
-def mindts(examples: List[Example], s: int, S: Set[str], gamma: Dict[str, int]) -> Optional[Node]:
+def mindts(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
     """find minimal tree using features in S and branch with R0 (algorithm 4)"""
     # step 1: find minimal tree with features S
     current_tree = find_minimal_tree(examples, S, s)
@@ -51,7 +52,7 @@ def mindts(examples: List[Example], s: int, S: Set[str], gamma: Dict[str, int]) 
     best_tree = current_tree
     for f in R0:
         new_S = S.union({f})
-        subtree = mindts(examples, s, new_S, gamma)
+        subtree = mindts(examples, s, new_S)
         if subtree and count_nodes(subtree) < count_nodes(best_tree):
             best_tree = subtree
     return best_tree if count_nodes(best_tree) <= s else None
@@ -63,125 +64,132 @@ def compute_global_assignment(examples: List[Example]) -> Dict[str, int]:
 
 
 def enumerate_minimal_support_sets(examples: List[Example], s: int) -> List[Set[str]]:
-    """enumeration of minimal support sets of size up to s using brute-force (corollary 9)"""
-    if not examples:
-        return []
-    features = list(examples[0].features.keys())
-    E_plus = [e for e in examples if e.is_positive]
-    E_minus = [e for e in examples if not e.is_positive]
-    if not E_plus or not E_minus:
-        return []
-
-    support_sets = []
-
-    # generate all subsets of features up to size s
-    for k in range(1, s + 1):
-        for subset in itertools.combinations(features, k):
-            subset_set = set(subset)
-            # check if subset is a support set
-            is_support = True
-            for e_p in E_plus:
-                for e_n in E_minus:
-                    if not any(f in subset_set and e_p.features[f] != e_n.features[f] for f in subset_set):
-                        is_support = False
-                        break
-                if not is_support:
-                    break
-            if is_support:
-                support_sets.append(subset_set)
-
-    # filter minimal support sets
-    minimal_support = []
-    for candidate in support_sets:
-        is_minimal = True
-        # check all proper subsets
-        for size in range(1, len(candidate)):
-            for smaller_subset in itertools.combinations(candidate, size):
-                smaller_set = set(smaller_subset)
-                if smaller_set in support_sets:
-                    is_minimal = False
-                    break
-            if not is_minimal:
-                break
-        if is_minimal:
-            minimal_support.append(candidate)
-
-    return minimal_support
+    """enumeration of minimal support sets of size up to s (corollary 9)"""
+    # TODO: implement this
 
 
 def find_minimal_tree(examples: List[Example], S: Set[str], s: int) -> Optional[Node]:
     """find minimal tree using features in S (theorem 4)"""
-    if not S:
-        # handle empty support set case (all examples same class)
-        if all(e.is_positive == examples[0].is_positive for e in examples):
-            return Node(is_leaf=True, is_positive=examples[0].is_positive)
-        return None
+
+    def generate_trees_of_size(n: int) -> List[Node]:
+        if n == 0:
+            return [Node(is_leaf=True)]
+
+        trees = []
+        for left_size in range(n):
+            right_size = n - 1 - left_size
+            left_subtrees = generate_trees_of_size(left_size)
+            right_subtrees = generate_trees_of_size(right_size)
+
+            for left in left_subtrees:
+                for right in right_subtrees:
+                    new_node = Node(left=left, right=right)
+                    trees.append(new_node)
+        return trees
+
+    def collect_internal_nodes(tree: Node) -> List[Node]:
+        nodes = []
+
+        def traverse(node):
+            if node.is_leaf or node is None:
+                return
+            nodes.append(node)
+            traverse(node.left)
+            traverse(node.right)
+
+        traverse(tree)
+        return nodes
+
+    def check_uniform(examples: List[Example]) -> Optional[bool]:
+        if not examples:
+            return None
+        label = examples[0].is_positive
+        return label if all(e.is_positive == label for e in examples) else None
+
+    def build_tree(node: Node, feat_map: Dict[int, str], thresholds: Dict[str, int]) -> Tuple[Node, bool]:
+        if node is None:
+            return None, False
+
+        if node.is_leaf:
+            return Node(is_leaf=True), True
+
+        # get feature and threshold for current node
+        feat = feat_map.get(id(node), None)
+        if feat is None:
+            return None, False
+
+        threshold = thresholds.get(feat, None)
+        if threshold is None:
+            return None, False
+
+        # recursively build children
+        left_child, left_valid = build_tree(node.left, feat_map, thresholds)
+        right_child, right_valid = build_tree(node.right, feat_map, thresholds)
+
+        if not left_valid or not right_valid:
+            return None, False
+
+        return Node(feature=feat, threshold=threshold, left=left_child, right=right_child), True
 
     best_tree = None
-    # try trees with single node first
-    if s >= 1:
-        for feature in S:
-            # create root node with this feature
-            root = Node(feature=feature)
-            feature_assignment = {id(root): feature}
+    smallest_size = float("inf")
 
-            # find valid threshold using binary search
-            domain = sorted({e.features[feature] for e in examples})
-            left, right = 0, len(domain) - 1
-            best_threshold = domain[0] - 1 if domain else 0
-            valid = False
+    # early check for uniform examples
+    uniform_result = check_uniform(examples)
+    if uniform_result is not None:
+        return Node(is_leaf=True, is_positive=uniform_result)
 
-            while left <= right:
-                mid = (left + right) // 2
-                threshold = domain[mid]
-                left_examples = [e for e in examples if e.features[feature] <= threshold]
-                right_examples = [e for e in examples if e.features[feature] > threshold]
+    # iterate all possible tree sizes up to s
+    for current_size in range(1, s + 1):
+        # generate all possible tree structures with current_size internal nodes
+        trees = generate_trees_of_size(current_size)
 
-                # check if left and right are uniform
-                left_uniform = all(e.is_positive == left_examples[0].is_positive for e in left_examples) if left_examples else True
-                right_uniform = all(e.is_positive == right_examples[0].is_positive for e in right_examples) if right_examples else True
+        for tree in trees:
+            # collect internal nodes in this tree structure
+            internal_nodes = collect_internal_nodes(tree)
+            if not internal_nodes or len(internal_nodes) != current_size:
+                continue  # skip invalid trees
 
-                if left_uniform and right_uniform:
-                    best_threshold = threshold
-                    valid = True
-                    left = mid + 1
-                else:
-                    right = mid - 1
+            # generate all feature assignments for internal nodes
+            features = list(S)
+            for feature_comb in itertools.product(features, repeat=current_size):
+                # create feature assignment dict
+                feature_assignment = {id(node): feat for node, feat in zip(internal_nodes, feature_comb)}
 
-            if valid:
-                root.threshold = best_threshold
-                root.left = Node(is_leaf=True, is_positive=any(e.is_positive for e in examples if e.features[feature] <= best_threshold))
-                root.right = Node(is_leaf=True, is_positive=any(e.is_positive for e in examples if e.features[feature] > best_threshold))
-                if best_tree is None or 1 < count_nodes(best_tree):
-                    best_tree = root
-    return best_tree
+                # check if valid thresholds exist
+                thresholds = findth(examples, tree, feature_assignment)
+                if thresholds is None:
+                    continue
+
+                # build actual tree structure with thresholds
+                actual_tree, valid = build_tree(tree, feature_assignment, thresholds)
+                if valid and count_nodes(actual_tree) <= s and count_nodes(actual_tree) < smallest_size:
+                    best_tree = actual_tree
+                    smallest_size = count_nodes(best_tree)
+
+    return best_tree if best_tree else None
 
 
 def compute_branching_set(examples: List[Example], S: Set[str]) -> Set[str]:
-    """compute branching set R0 for support set S (lemma 14)."""
+    """compute branching set R0 for support set S (lemma 14)"""
     global gamma
 
-    # compute E(S): one example per equivalence class
-    equivalence_classes = {}
+    # group examples by their S-feature values (partial assignments α)
+    equivalence_classes = defaultdict(list)
     for e in examples:
-        key = tuple((f, e.features[f]) for f in sorted(S))
-        if key not in equivalence_classes:
-            equivalence_classes[key] = e
-    E_S = list(equivalence_classes.values())
+        alpha = tuple(sorted((f, e.features[f]) for f in S))  # represents α
+        equivalence_classes[alpha].append(e)
 
-    # collect features not in S where examples disagree with gamma
+    # select one representative per non-empty equivalence class
+    E_S = [next(iter(group)) for group in equivalence_classes.values()]
+
+    # compute δ(e, γ) for each representative
     R0 = set()
     for e in E_S:
-        for f in e.features:
-            if f not in S and e.features[f] != gamma.get(f, None):
-                R0.add(f)
+        delta = {f for f, val in e.features.items() if gamma.get(f) != val}  # values don't match
+        R0.update(delta)
+
     return R0
-
-
-def count_nodes(tree: Optional[Node]) -> int:
-    if tree is None or tree.is_leaf:
-        return 0
-    return 1 + count_nodes(tree.left) + count_nodes(tree.right)
 
 
 #
@@ -247,3 +255,14 @@ def binary_search(examples: List[Example], tree: Node, feature_assignment: Dict[
             right = mid - 1
 
     return best_threshold
+
+
+#
+# utils
+#
+
+
+def count_nodes(tree: Optional[Node]) -> int:
+    if tree is None or tree.is_leaf:
+        return 0
+    return 1 + count_nodes(tree.left) + count_nodes(tree.right)
