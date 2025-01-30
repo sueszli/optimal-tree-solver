@@ -1,3 +1,44 @@
+---
+title: "Parameterized Complexity of Small Decision Tree Learning"
+subtitle: "Code: [`github.com/sueszli/optimal-tree-solver`](https://github.com/sueszli/optimal-tree-solver) \\hfill Yahya Jabary, TU Wien"
+output: pdf_document
+documentclass: article
+papersize: a4
+pagestyle: empty
+numbersections: false
+geometry:
+    - top=15mm
+    - bottom=15mm
+    - left=15mm
+    - right=15mm
+header-includes:
+    # title
+    - \usepackage{titling}
+    - \setlength{\droptitle}{-15pt}
+    - \pretitle{\vspace{-30pt}\begin{center}\LARGE}
+    - \posttitle{\end{center}\vspace{-20pt}}
+    # content
+    # - \usepackage{scrextend}
+    # - \changefontsizes[8pt]{8pt}
+    # code
+    - \usepackage{fancyvrb}
+    - \fvset{fontsize=\fontsize{8pt}{8pt}\selectfont}
+    - \usepackage{listings}
+    - \lstset{basicstyle=\fontsize{8pt}{8pt}\selectfont\ttfamily}
+    # code output
+    - \DefineVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\fontsize{8pt}{8pt}}
+    # tables
+    - \AtBeginEnvironment{tabular}{\tiny}
+    - \setlength{\tabcolsep}{4pt}
+    - \renewcommand{\arraystretch}{0.9}
+    # disable page numbers
+    - \usepackage{nopageno}
+---
+
+**Source:** A Ordyniak, S., & Szeider, S. (2021). Parameterized Complexity of Small Decision Tree Learning. Proceedings of the AAAI Conference on Artificial Intelligence, 35 (7), 6454-6462. [https://www.ac.tuwien.ac.at/files/tr/ac-tr-21-002.pdf](https://www.ac.tuwien.ac.at/files/tr/ac-tr-21-002.pdf).
+
+---
+
 *motivation*
 
 - small decision trees = fewer tests, easier to interpret, generalize better - but expensive to train (np-hard)

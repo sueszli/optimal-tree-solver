@@ -18,19 +18,19 @@ class Node:
     is_positive: Optional[bool] = None
 
 
-def minDT(examples: List[Example], s: int) -> Optional[Node]:
+def mindt(examples: List[Example], s: int) -> Optional[Node]:
     """find minimal decision tree with at most s nodes (algorithm 3)"""
     gamma = compute_global_assignment(examples)
     support_sets = enumerate_minimal_support_sets(examples, s)
     best_tree = None
     for S in support_sets:
-        tree = minDTS(examples, s, S)
+        tree = mindts(examples, s, S)
         if tree and (best_tree is None or count_nodes(tree) < count_nodes(best_tree)):
             best_tree = tree
     return best_tree
 
 
-def minDTS(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
+def mindts(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
     """find minimal tree using features in S and branch with R0 (algorithm 4)"""
     # step 1: find minimal tree with features S
     current_tree = find_minimal_tree(examples, S, s)
@@ -46,7 +46,7 @@ def minDTS(examples: List[Example], s: int, S: Set[str]) -> Optional[Node]:
         new_S = S.union({f})
         if len(new_S) > s:
             continue
-        subtree = minDTS(examples, s, new_S)
+        subtree = mindts(examples, s, new_S)
         if subtree is not None and (count_nodes(subtree) < count_nodes(best_tree)):
             best_tree = subtree
     return best_tree if count_nodes(best_tree) <= s else None
